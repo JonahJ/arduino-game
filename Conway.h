@@ -1,5 +1,6 @@
-#define DEBUG true
+#define DEBUG false
 #define BRIGHTNESS 10
+
 #define CELL_STATE_ALIVE true
 #define CELL_STATE_DEAD false
 
@@ -13,18 +14,24 @@
 
 class Conway {
     private:
-        bool ** board;
-        bool ** board_next;
-        bool ** board_previous;
+        // bool board [16][16];
+        // bool board_next [16][16];
+        // bool board_previous [16][16];
 
-        int i_col;
-        int i_row;
+        unsigned char ** board;
+        unsigned char ** board_next;
+        unsigned char ** board_previous;
 
-        int num_alive;
+        unsigned char i_col;
+        unsigned char i_row;
+
+        // int num_alive;
+        bool any_cells_alive;
+
         Adafruit_NeoMatrix * led_matrix;
 
-        int width;
-        int height;
+        unsigned char width;
+        unsigned char height;
 
         void _print();
         void _randomize();
@@ -52,23 +59,30 @@ Conway::Conway(int num_pixels_width, int num_pixels_height, int num_boards_x, in
     width = led_matrix->width();
     height = led_matrix->height();
 
-    num_alive = 0;
+    // num_alive = 0;
+    any_cells_alive = false;
 
-    board = new bool * [width];
-    board_next = new bool * [width];
-    // board_previous = new bool * [width];
+    // for(i_col=0; i_col < width; i_col++) {
+    //     for(i_row=0; i_row < height; i_row++) {
+    //         board[i_col][i_row] = CELL_STATE_DEAD;
+    //         board_next[i_col][i_row] = CELL_STATE_DEAD;
+    //         board_previous[i_col][i_row] = CELL_STATE_DEAD;
+    //     }
+    // }
+
+    board = new unsigned char * [width];
+    board_next = new unsigned char * [width];
+    // board_previous = new char * [width];
 
     for(i_col=0; i_col < width; i_col++) {
-        board[i_col] = new bool [height];
-        board_next[i_col] = new bool [height];
-        // board_previous[i_col] = new bool [height];
-
+        board[i_col] = new unsigned char [height];
+        board_next[i_col] = new unsigned char [height];
+        // board_previous[i_col] = new char [height];
 
         for(i_row=0; i_row < height; i_row++) {
             board[i_col][i_row] = CELL_STATE_DEAD;
             board_next[i_col][i_row] = CELL_STATE_DEAD;
             // board_previous[i_col][i_row] = CELL_STATE_DEAD;
-
         }
     }
 }
@@ -87,8 +101,9 @@ void Conway::update(){
 
     // led_matrix->show();
 
-    if(num_alive == 0){
-        Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
+    // if(num_alive == 0){
+    if(!any_cells_alive){
+        if(DEBUG) Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
         _randomize();
         return;
     }
@@ -176,7 +191,8 @@ void Conway::update(){
     /**
      * Copy Board
      */
-    num_alive = 0;
+    // num_alive = 0;
+    any_cells_alive = false;
 
     bool board_different = false;
 
@@ -191,12 +207,14 @@ void Conway::update(){
 
             board[i_col][i_row] = board_next[i_col][i_row];
 
-            if(board[i_col][i_row] != CELL_STATE_DEAD) num_alive += 1;
+            // if(board[i_col][i_row] != CELL_STATE_DEAD) num_alive += 1;
+            if(board[i_col][i_row] != CELL_STATE_DEAD) any_cells_alive = true;
+
         }
     }
 
     if(!board_different) {
-        Serial.println("Board Stuck in same state");
+        if(DEBUG) Serial.println("Board Stuck in same state");
         _randomize();
         return;
     }
@@ -205,11 +223,15 @@ void Conway::update(){
 }
 
 void Conway::_print(){
+
+
     Serial.println("Printing Board");
 
     Serial.println("Width " + String(width));
     Serial.println("Height " + String(height));
-    Serial.println("Number Active " + String(num_alive));
+    // Serial.println("Number Active " + String(num_alive));
+    Serial.println("Any Active: " + String(any_cells_alive));
+
 
     Serial.print("    ");
 
@@ -258,6 +280,13 @@ void Conway::_print(){
 }
 
 void Conway::_randomize(){
+
+    for(i_col = 0; i_col < width; i_col++){
+        for(i_row = 0; i_row < height; i_row++){
+            board[i_col][i_row] = CELL_STATE_DEAD;
+        }
+    }
+
     /**
      * Get Stuck
      */
@@ -265,6 +294,7 @@ void Conway::_randomize(){
     // board[4][5] = CELL_STATE_ALIVE;
     // board[4][6] = CELL_STATE_ALIVE;
     // num_alive = 3;
+    // any_cells_alive = true;
     // return;
 
     /**
@@ -276,36 +306,51 @@ void Conway::_randomize(){
     // board[1][2] = CELL_STATE_ALIVE;
     // board[2][2] = CELL_STATE_ALIVE;
     // num_alive = 5;
+    // any_cells_alive = true;
     // return;
 
 
     /**
      * Small Exploder
      */
-    // board[3][2] = CELL_STATE_ALIVE;
-    // board[2][3] = CELL_STATE_ALIVE;
-    // board[3][3] = CELL_STATE_ALIVE;
-    // board[4][3] = CELL_STATE_ALIVE;
-    // board[2][4] = CELL_STATE_ALIVE;
-    // board[4][4] = CELL_STATE_ALIVE;
-    // board[3][5] = CELL_STATE_ALIVE;
-    // num_alive = 7;
+    // i_col = i_row = 3;
+    // if (width == height) {
+    //     i_col = width / 2;
+    //     i_row = height / 2;
+    // }
+
+    // board[i_col    ][i_row - 1] = CELL_STATE_ALIVE;
+    // board[i_col - 1][i_row    ] = CELL_STATE_ALIVE;
+    // board[i_col    ][i_row    ] = CELL_STATE_ALIVE;
+    // board[i_col + 1][i_row    ] = CELL_STATE_ALIVE;
+    // board[i_col - 1][i_row + 1] = CELL_STATE_ALIVE;
+    // board[i_col + 1][i_row + 1] = CELL_STATE_ALIVE;
+    // board[i_col    ][i_row + 2] = CELL_STATE_ALIVE;
+    // // num_alive = 7;
+    // any_cells_alive = true;
     // return;
 
 
+    /**
+     * Psuedo Random
+     */
 
     randomSeed(analogRead(0));
 
     long num_random_seeds = random(0, width * height);
     long num_skip = 0;
+    int max_width_height = max(width, height);
 
     for(i_col = 0; i_col < width; i_col++){
         for(i_row = 0; i_row < height; i_row++){
-            num_skip = random(0, width);
 
-            if(i_col % num_skip > 5){
+
+            num_skip = random(0, max_width_height);
+
+            if(i_col % num_skip > 2){
                 board[i_col][i_row] = CELL_STATE_ALIVE;
-                num_alive += 1;
+                // num_alive += 1;
+                any_cells_alive = true;
             }
         }
     }
@@ -323,6 +368,9 @@ void Conway::draw(){
     // led_matrix->drawPixel(10, 2, colors[1]);
     // led_matrix->drawPixel(1, 15, colors[2]);
     // led_matrix->drawPixel(13, 13, colors[3]);
+
+
+    if(DEBUG) _print();
 
     for(i_col = 0; i_col < width; i_col++){
         for(i_row = 0; i_row < height; i_row++){
