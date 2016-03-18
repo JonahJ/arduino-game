@@ -1,6 +1,6 @@
 #include "Conway.h"
 
-#define SPEED 50
+#define SPEED 200
 
 Conway game_of_life = Conway(8, 8, 2, 2, 6);
 
@@ -11,7 +11,9 @@ void setup() {
 }
 
 void loop() {
-    game_of_life.update();
+
     game_of_life.draw();
     delay(SPEED);
+    game_of_life.update();
+
 }
