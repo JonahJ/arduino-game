@@ -1,6 +1,6 @@
 #include "Conway.h"
 
-#define SPEED 200
+#define SPEED 50
 
 Conway game_of_life = Conway(8, 8, 2, 2, 6);
 

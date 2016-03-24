@@ -1,8 +1,16 @@
+#ifndef Conway_h
+#define Conway_h
+
 #define DEBUG false
 #define BRIGHTNESS 10
 
-#define CELL_STATE_ALIVE 1
-#define CELL_STATE_DEAD 0
+#ifndef CELL_STATE_ALIVE
+    #define CELL_STATE_ALIVE 1
+#endif
+#ifndef CELL_STATE_DEAD
+    #define CELL_STATE_DEAD 0
+#endif
+
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
@@ -11,25 +19,36 @@
     #define PSTR /* Make Arduino Due happy */
 #endif
 
+unsigned char width = 0;
+unsigned char height = 0;
+
+// unsigned char i_col = 0;
+// unsigned char i_row = 0;
+#include "Board.h"
 
 class Conway {
     private:
-        unsigned char ** board;
-        unsigned char ** board_next;
-        unsigned char ** board_previous;
+        Board * board;
+        Board * board_next;
+        Board * board_next2;
 
-        unsigned char i_col_count;
         unsigned char i_col;
         unsigned char i_row;
+
+        // unsigned char width;
+        // unsigned char height;
 
         bool any_cells_alive;
 
         Adafruit_NeoMatrix * led_matrix;
 
-        unsigned true_width;
-        unsigned num_columns;
-        unsigned width;
-        unsigned height;
+        unsigned char num_active_surrounding;
+        unsigned char bound_col_min;
+        unsigned char bound_col_max;
+        unsigned char bound_row_min;
+        unsigned char bound_row_max;
+        unsigned char i_col_check;
+        unsigned char i_row_check;
 
         void _print(bool current);
         void _randomize();
@@ -55,9 +74,7 @@ Conway::Conway(int num_pixels_width, int num_pixels_height, int num_boards_x, in
         NEO_GRB + NEO_KHZ800
     );
 
-    true_width = led_matrix->width();
-    num_columns = true_width / 8;
-    width = 8;
+    width = led_matrix->width();
     height = led_matrix->height();
 
 
@@ -69,37 +86,10 @@ Conway::Conway(int num_pixels_width, int num_pixels_height, int num_boards_x, in
     // }
 
     any_cells_alive = false;
-    board = new unsigned char * [true_width / 8];
-    board_next = new unsigned char * [true_width / 8];
-
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        board[i_col_count] = new unsigned char [height];
-        board_next[i_col_count] = new unsigned char [height];
-
-        for(i_row = 0; i_row < height; i_row++){
-            board[i_col_count][i_row] = NULL;
-            board_next[i_col_count][i_row] = NULL;
-        }
-    }
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_row = 0; i_row < height; i_row++) {
-            board[i_col_count][i_row] = CELL_STATE_DEAD;
-            board_next[i_col_count][i_row] = CELL_STATE_DEAD;
-        }
-    }
-    // for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-    //     for (i_col = 0; i_col < width; i_col++) {
-    //         for(i_row = 0; i_row < height; i_row++) {
-    //             board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_DEAD << i_col));
-    //             board_next[i_col_count][i_row] = (board_next[i_col_count][i_row] | (CELL_STATE_DEAD << i_col));
-
-    //             if (i_col % 2 == 0) {
-    //                 board_next[i_col_count][i_row] = (board_next[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
-    //             }
-    //         }
-    //     }
-    // }
+    board = new Board(width, height);
+    board_next = new Board(width, height);
 }
+
 
 void Conway::init() {
     led_matrix->begin();
@@ -126,135 +116,100 @@ void Conway::update(){
     /**
      * Reset board next
      */
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_row = 0; i_row < height; i_row++) {
-            board_next[i_col_count][i_row] = 0;
-        }
-    }
-
-    int num_active_surrounding = 0;
-    int bound_col_min = 0;
-    int bound_col_max = 0;
-    int bound_row_min = 0;
-    int bound_row_max = 0;
-    int i_col_check = 0;
-    int i_row_check = 0;
+    board_next->reset();
 
     any_cells_alive = false;
-
 
     /**
      * Compute what is alive in the next round
      */
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_col = 0; i_col < width; i_col++){
-            for(i_row = 0; i_row < height; i_row++){
+    for(i_col = 0; i_col < width; i_col++){
+        for(i_row = 0; i_row < height; i_row++){
+            num_active_surrounding = 0;
+            bound_col_min = i_col;
+            bound_col_max = i_col;
+            bound_row_min = i_row;
+            bound_row_max = i_row;
 
+            /**
+             * Check left, right, up, down
+             */
+            if(i_col > 0)           bound_col_min -= 1;
+            if(i_col < width - 1)   bound_col_max += 1;
+            if(i_row > 0)           bound_row_min -= 1;
+            if(i_row < height - 1)  bound_row_max += 1;
 
-                num_active_surrounding = 0;
-                bound_col_min = i_col;
-                bound_col_max = i_col;
-                bound_row_min = i_row;
-                bound_row_max = i_row;
+            /**
+             * Check Sorrounding
+             */
+            for(i_col_check = bound_col_min; i_col_check <= bound_col_max; i_col_check++){
+                for(i_row_check = bound_row_min; i_row_check <= bound_row_max; i_row_check++){
 
-                /**
-                 * Check left, right, up, down
-                 */
-                if(i_col > 0)           bound_col_min -= 1;
-                if(i_col < width - 1)   bound_col_max += 1;
-                if(i_row > 0)           bound_row_min -= 1;
-                if(i_row < height - 1)  bound_row_max += 1;
-
-                /**
-                 * Check Sorrounding
-                 */
-                for(i_col_check = bound_col_min; i_col_check <= bound_col_max; i_col_check++){
-
-                    if (num_active_surrounding > 3) break;
-
-                    for(i_row_check = bound_row_min; i_row_check <= bound_row_max; i_row_check++){
-
+                    /**
+                     * If not this spot
+                     */
+                    if(i_col_check == i_col && i_row_check == i_row) continue;
+                    // else {
                         /**
-                         * If not this spot
+                         * If active
                          */
-                        if(i_col_check == i_col && i_row_check == i_row) {}
-                        else {
-                            /**
-                             * If active
-                             */
-                            if(((board[i_col_count][i_row_check] >> i_col_check) & 1) == CELL_STATE_ALIVE) num_active_surrounding += 1;
+                        if(board->getState(i_col_check, i_row_check) == CELL_STATE_ALIVE) num_active_surrounding += 1;
 
-                            if (num_active_surrounding > 3) break;
-                        }
-                    }
-
-                    if (num_active_surrounding > 3) break;
+                        if (num_active_surrounding > 3) break;
+                    // }
                 }
 
-                // if(num_active_surrounding > 2){
-                //     Serial.println("FOUND " + String(num_active_surrounding));
-                //     Serial.println(String(i_col + i_col_count * width) + " , " + String(i_row));
-                //     Serial.println(((board[i_col_count][i_row] >> i_col) & 1));
-                // }
+                if (num_active_surrounding > 3) break;
+            }
 
-
-                /**
-                 * Decide if alive or CELL_STATE_DEAD
-                 */
-                if(((board[i_col_count][i_row] >> i_col) & CELL_STATE_ALIVE) == CELL_STATE_ALIVE) {
-                    if(num_active_surrounding == 2 || num_active_surrounding == 3){
-                        board_next[i_col_count][i_row] = (board_next[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
-                        any_cells_alive = true;
-                    }
-                }
-                else if(num_active_surrounding == 3) {
-                    board_next[i_col_count][i_row] = (board_next[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
+            /**
+             * Decide if alive or CELL_STATE_DEAD
+             */
+            if(board->getState(i_col, i_row) == CELL_STATE_ALIVE) {
+                if(num_active_surrounding == 2 || num_active_surrounding == 3){
+                    board_next->setAlive(i_col, i_row);
                     any_cells_alive = true;
                 }
             }
+            else if(num_active_surrounding == 3) {
+                board_next->setAlive(i_col, i_row);
+                any_cells_alive = true;
+            }
         }
     }
+
 
     bool board_different = false;
 
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_col = 0; i_col < width; i_col++){
-            for(i_row = 0; i_row < height; i_row++){
+    for(i_col = 0; i_col < width; i_col++){
+        for(i_row = 0; i_row < height; i_row++){
+            if(!board_different)
+                if(board->getState(i_col, i_row) != board_next->getState(i_col, i_row)){
+                    board_different = true;
+                    break;
+                }
 
-                if(!board_different)
-                    if(((board_next[i_col_count][i_row] >> i_col) & CELL_STATE_ALIVE) != ((board[i_col_count][i_row] >> i_col) & CELL_STATE_ALIVE)){
-                        board_different = true;
-                        break;
-                    }
-
-                if(board_different) break;
-            }
             if(board_different) break;
         }
         if(board_different) break;
-    }
-
-    /**
-     * Copy Board
-     */
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_row = 0; i_row < height; i_row++) {
-            board[i_col_count][i_row] = CELL_STATE_DEAD;
-        }
-    }
-
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_col = 0; i_col < width; i_col++){
-            for(i_row = 0; i_row < height; i_row++){
-                board[i_col_count][i_row] = (board[i_col_count][i_row] | (((board_next[i_col_count][i_row] >> i_col) & CELL_STATE_ALIVE) << i_col));
-            }
-        }
     }
 
     if(!board_different) {
         Serial.println("Board Stuck in same state");
         _randomize();
         return;
+    }
+
+
+    /**
+     * Copy Board
+     */
+    board->reset();
+    for(i_col = 0; i_col < width; i_col++){
+        for(i_row = 0; i_row < height; i_row++){
+            // TODO internalize, only do if char not 0
+            board->setState(i_col, i_row, board_next->getState(i_col, i_row));
+        }
     }
 
     return;
@@ -266,35 +221,32 @@ void Conway::_print(bool current = true){
     else Serial.println("Print Next");
 
     Serial.println("Printing Board");
-    Serial.println("Width " + String(true_width));
+    Serial.println("Width " + String(width));
     Serial.println("Height " + String(height));
     Serial.println("Any Active: " + String(any_cells_alive));
 
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        if(i_col_count == 0){
+    for (i_col = 0; i_col < width; i_col++) {
+        if(i_col == 0){
             Serial.print("  ");
 
             if(height >= 10) Serial.print(" ");
         }
 
-        for (i_col = 0; i_col < width; i_col++) {
-            Serial.print("  ");
-            Serial.print(i_col + i_col_count * width);
-        }
+        Serial.print("  ");
+        Serial.print(i_col);
     }
     Serial.print("\n");
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        if(i_col_count == 0){
+
+    for (i_col = 0; i_col < width; i_col++) {
+        if(i_col == 0){
             Serial.print("  ");
 
             if(height >= 10) Serial.print(" ");
         }
 
-        for (i_col = 0; i_col < width; i_col++) {
-            Serial.print("---");
+        Serial.print("---");
 
-            if(i_col + i_col_count * width >= 10) Serial.print("-");
-        }
+        if(i_col >= 10) Serial.print("-");
     }
     Serial.print("\n");
 
@@ -307,16 +259,14 @@ void Conway::_print(bool current = true){
         Serial.print(i_row);
         Serial.print(" | ");
 
-        for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-            for (i_col = 0; i_col < width; i_col++) {
+        for (i_col = 0; i_col < width; i_col++) {
 
-                if(i_col + i_col_count * width > 0) Serial.print("  ");
+            if(i_col > 0) Serial.print("  ");
 
-                if(i_col + i_col_count * width >= 10) Serial.print(" ");
+            if(i_col >= 10) Serial.print(" ");
 
-                if(current) Serial.print(((board[i_col_count][i_row] >> i_col) & CELL_STATE_ALIVE));
-                else Serial.print(((board_next[i_col_count][i_row] >> i_col) & CELL_STATE_ALIVE));
-            }
+            if(current) Serial.print(board->getState(i_col, i_row));
+            else Serial.print(board_next->getState(i_col, i_row));
         }
         Serial.print("\n");
     }
@@ -324,36 +274,23 @@ void Conway::_print(bool current = true){
 
 void Conway::_randomize(){
 
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_row = 0; i_row < height; i_row++){
-            board[i_col_count][i_row] = CELL_STATE_DEAD;
-        }
-    }
+    board->reset();
 
-    // board[0][0] = 3;
-    // board[0][1] = 3;
+    // board->setAlive(7, 2);
+    // board->setAlive(7, 3);
+    // board->setAlive(7, 4);
     // any_cells_alive = true;
     // return;
 
-    /**
-     * Get Stuck
-     */
-    // board[4][4] = CELL_STATE_ALIVE;
-    // board[4][5] = CELL_STATE_ALIVE;
-    // board[4][6] = CELL_STATE_ALIVE;
-    // num_alive = 3;
-    // any_cells_alive = true;
-    // return;
 
     /**
      * Glider
      */
-    // board[1][0] = CELL_STATE_ALIVE;
-    // board[2][1] = CELL_STATE_ALIVE;
-    // board[0][2] = CELL_STATE_ALIVE;
-    // board[1][2] = CELL_STATE_ALIVE;
-    // board[2][2] = CELL_STATE_ALIVE;
-    // num_alive = 5;
+    // board->setAlive(1, 0);
+    // board->setAlive(2, 1);
+    // board->setAlive(0, 2);
+    // board->setAlive(1, 2);
+    // board->setAlive(2, 2);
     // any_cells_alive = true;
     // return;
 
@@ -366,22 +303,13 @@ void Conway::_randomize(){
     //     i_col = width / 2;
     //     i_row = height / 2;
     // }
-
-    // board[i_col    ][i_row - 1] = CELL_STATE_ALIVE;
-    // board[i_col - 1][i_row    ] = CELL_STATE_ALIVE;
-    // board[i_col    ][i_row    ] = CELL_STATE_ALIVE;
-    // board[i_col + 1][i_row    ] = CELL_STATE_ALIVE;
-    // board[i_col - 1][i_row + 1] = CELL_STATE_ALIVE;
-    // board[i_col + 1][i_row + 1] = CELL_STATE_ALIVE;
-    // board[i_col    ][i_row + 2] = CELL_STATE_ALIVE;
-    // // board[i_col    ][i_row - 1] = CELL_STATE_ALIVE;
-    // // board[i_col - 1][i_row    ] = CELL_STATE_ALIVE;
-    // // board[i_col    ][i_row    ] = CELL_STATE_ALIVE;
-    // // board[i_col + 1][i_row    ] = CELL_STATE_ALIVE;
-    // // board[i_col - 1][i_row + 1] = CELL_STATE_ALIVE;
-    // // board[i_col + 1][i_row + 1] = CELL_STATE_ALIVE;
-    // // board[i_col    ][i_row + 2] = CELL_STATE_ALIVE;
-    // // num_alive = 7;
+    // board->setAlive(i_col    , i_row - 1);
+    // board->setAlive(i_col - 1, i_row    );
+    // board->setAlive(i_col    , i_row    );
+    // board->setAlive(i_col + 1, i_row    );
+    // board->setAlive(i_col - 1, i_row + 1);
+    // board->setAlive(i_col + 1, i_row + 1);
+    // board->setAlive(i_col    , i_row + 2);
     // any_cells_alive = true;
     // return;
 
@@ -389,23 +317,18 @@ void Conway::_randomize(){
     /**
      * Psuedo Random
      */
-
     randomSeed(analogRead(0));
 
     long num_random_seeds = random(0, width * height);
     long num_skip = 0;
     int max_width_height = max(width, height);
 
-    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_col = 0; i_col < width; i_col++){
-            for(i_row = 0; i_row < height; i_row++){
-                num_skip = random(0, max_width_height);
-
-                if((i_col + i_col_count * width) % num_skip && num_skip % 2){
-                    board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
-                    any_cells_alive = true;
-                } else board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_DEAD << i_col));
-
+    for(i_col = 0; i_col < width; i_col++){
+        for(i_row = 0; i_row < height; i_row++){
+            num_skip = random(0, max_width_height);
+            if(i_col % num_skip && num_skip % 2){
+                board->setAlive(i_col, i_row);
+                any_cells_alive = true;
             }
         }
     }
@@ -426,20 +349,21 @@ void Conway::draw(){
 
 
     if(DEBUG){
-        Serial.println("\n\n\n\n\n\n");
-        _print();
+        Serial.println("MOVE");
+        // Serial.println("\n\n\n\n\n\n");
+        // _print();
         _print(false);
     }
 
-    for(i_col_count = 0; i_col_count < num_columns; i_col_count++){
-        for(i_col = 0; i_col < width; i_col++){
-            for(i_row = 0; i_row < height; i_row++){
-                // led_matrix->drawPixel(i_col + i_col_count * width, i_row, led_matrix->Color(0, 255, 0));
-                if(((board[i_col_count][i_row] >> i_col) & CELL_STATE_ALIVE) == CELL_STATE_ALIVE) led_matrix->drawPixel(i_col + i_col_count * width, i_row, led_matrix->Color(255, 0, 255));
-                else led_matrix->drawPixel(i_col + i_col_count * width, i_row, led_matrix->Color(0, 0, 0));
-            }
+    for(i_col = 0; i_col < width; i_col++){
+        for(i_row = 0; i_row < height; i_row++){
+            // led_matrix->drawPixel(i_col + i_col_count * width, i_row, led_matrix->Color(0, 255, 0));
+            if(board->getState(i_col, i_row) == CELL_STATE_ALIVE) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 255));
+            else led_matrix->drawPixel(i_col, i_row, led_matrix->Color(0, 0, 0));
         }
     }
 
     led_matrix->show();
 }
+
+#endif /* Conway_h */
