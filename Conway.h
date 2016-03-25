@@ -1,7 +1,7 @@
 #ifndef Conway_h
 #define Conway_h
 
-#define DEBUG false
+#define DEBUG true
 #define BRIGHTNESS 10
 
 #ifndef CELL_STATE_ALIVE
@@ -30,7 +30,8 @@ class Conway {
     private:
         Board * board;
         Board * board_next;
-        Board * board_next2;
+        Board ** boards;
+        // Board ** boards_density;
 
         unsigned char i_col;
         unsigned char i_row;
@@ -88,6 +89,14 @@ Conway::Conway(int num_pixels_width, int num_pixels_height, int num_boards_x, in
     any_cells_alive = false;
     board = new Board(width, height);
     board_next = new Board(width, height);
+
+    int num = 46;
+
+    // boards = new Board * [num];
+
+    // for (int i = 0; i < num; ++i){
+    //     boards[i] = new Board(width, height);
+    // }
 }
 
 
@@ -149,14 +158,12 @@ void Conway::update(){
                      * If not this spot
                      */
                     if(i_col_check == i_col && i_row_check == i_row) continue;
-                    // else {
-                        /**
-                         * If active
-                         */
-                        if(board->getState(i_col_check, i_row_check) == CELL_STATE_ALIVE) num_active_surrounding += 1;
+                    /**
+                     * If active
+                     */
+                    if(board->getState(i_col_check, i_row_check) == CELL_STATE_ALIVE) num_active_surrounding += 1;
 
-                        if (num_active_surrounding > 3) break;
-                    // }
+                    if (num_active_surrounding > 3) break;
                 }
 
                 if (num_active_surrounding > 3) break;
@@ -168,11 +175,13 @@ void Conway::update(){
             if(board->getState(i_col, i_row) == CELL_STATE_ALIVE) {
                 if(num_active_surrounding == 2 || num_active_surrounding == 3){
                     board_next->setAlive(i_col, i_row);
+                    // board_next->setState(i_col, i_row, num_active_surrounding);
                     any_cells_alive = true;
                 }
             }
             else if(num_active_surrounding == 3) {
                 board_next->setAlive(i_col, i_row);
+                // board_next->setState(i_col, i_row, num_active_surrounding);
                 any_cells_alive = true;
             }
         }
@@ -286,13 +295,13 @@ void Conway::_randomize(){
     /**
      * Glider
      */
-    // board->setAlive(1, 0);
-    // board->setAlive(2, 1);
-    // board->setAlive(0, 2);
-    // board->setAlive(1, 2);
-    // board->setAlive(2, 2);
-    // any_cells_alive = true;
-    // return;
+    board->setAlive(1, 0);
+    board->setAlive(2, 1);
+    board->setAlive(0, 2);
+    board->setAlive(1, 2);
+    board->setAlive(2, 2);
+    any_cells_alive = true;
+    return;
 
 
     /**
@@ -358,7 +367,8 @@ void Conway::draw(){
     for(i_col = 0; i_col < width; i_col++){
         for(i_row = 0; i_row < height; i_row++){
             // led_matrix->drawPixel(i_col + i_col_count * width, i_row, led_matrix->Color(0, 255, 0));
-            if(board->getState(i_col, i_row) == CELL_STATE_ALIVE) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 255));
+            // if(board->getState(i_col, i_row) > CELL_STATE_ALIVE) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 0));
+            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 255));
             else led_matrix->drawPixel(i_col, i_row, led_matrix->Color(0, 0, 0));
         }
     }

@@ -20,9 +20,13 @@ unsigned char i_row = 0;
     #define CELL_STATE_DEAD 0
 #endif /* CELL_STATE_DEAD */
 
-#ifndef BITS_PER_COLUMN
-    #define BITS_PER_COLUMN 8
-#endif /* BITS_PER_COLUMN */
+#ifndef CELLS_PER_BYTE
+    #define CELLS_PER_BYTE 8
+#endif /* CELLS_PER_BYTE */
+
+#ifndef COLUMN_WIDTH
+    #define COLUMN_WIDTH 8 / CELLS_PER_BYTE
+#endif /* COLUMN_WIDTH */
 
 class Board {
 private:
@@ -53,7 +57,7 @@ Board::Board(unsigned char _width, unsigned char _height){
     // width = _width;
     // height = _height;
 
-    num_columns = width / BITS_PER_COLUMN;
+    num_columns = width / CELLS_PER_BYTE;
 
 
     board = new unsigned char * [num_columns];
@@ -66,25 +70,32 @@ Board::Board(unsigned char _width, unsigned char _height){
         }
     }
 
-    // for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-    //     for (i_col = 0; i_col < width; i_col++) {
-    //         for(i_row = 0; i_row < height; i_row++) {
-    //             // board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
+    for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
+        for (i_col = 0; i_col < width; i_col++) {
+            for(i_row = 0; i_row < height; i_row++) {
+                // board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
 
-    //             if(i_col_count == 0 && i_col == 1 && i_row == 1){
-    //                 // board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
-    //             }
+                if(i_col_count == 0 && i_col == 1 && i_row == 1){
+                    board[i_col_count][i_row] = 3;
 
-    //         }
-    //     }
-    // }
+                    // board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
+                }
+
+            }
+        }
+    }
 }
 
 int Board::getState(unsigned char x, unsigned char y){
-    i_col_count = x / BITS_PER_COLUMN;
-    i_col = x - i_col_count * BITS_PER_COLUMN;
+    i_col_count = x / CELLS_PER_BYTE;
+    i_col = x - i_col_count * CELLS_PER_BYTE;
     i_row = y;
 
+    int over = 1;
+
+    // if(COLUMN_WIDTH > 1){
+    //     over += COLUMN_WIDTH;
+    // }
    // cout
    // << "( " << static_cast<unsigned>(x)
    // << " , " << static_cast<unsigned>(y)
@@ -95,12 +106,18 @@ int Board::getState(unsigned char x, unsigned char y){
    // << " )"
    // << endl;
 
-    return ((board[i_col_count][i_row] >> i_col) & 1);
+    // return ((board[i_col_count][i_row] >> i_col) & COLUMN_WIDTH);
+
+    // if(COLUMN_WIDTH == 1) return ((board[i_col_count][i_row] >> i_col) & (1 << (COLUMN_WIDTH)) - 1);
+
+    return ((board[i_col_count][i_row] >> i_col) & (1 << (over)) - 1);
+    // return ((board[i_col_count][i_row] >> i_col) & (1 << (COLUMN_WIDTH + 1)) - 1);
+    // ((board[i_col_count][i_row] >> i_col) & COLUMN_WIDTH);
 }
 
 void Board::setState(unsigned char x, unsigned char y, int state){
-    i_col_count = x / BITS_PER_COLUMN;
-    i_col = x - i_col_count * BITS_PER_COLUMN;
+    i_col_count = x / CELLS_PER_BYTE;
+    i_col = x - i_col_count * CELLS_PER_BYTE;
     i_row = y;
 
     board[i_col_count][i_row] = (board[i_col_count][i_row] | (state << i_col));
