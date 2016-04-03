@@ -1,15 +1,21 @@
 #ifndef Conway_h
 #define Conway_h
 
-#define DEBUG true
-#define BRIGHTNESS 10
+#ifndef CONWAY_DEBUG
+    #define CONWAY_DEBUG true
+#endif /* CONWAY_DEBUG */
+
+#ifndef BRIGHTNESS
+    #define BRIGHTNESS 40
+#endif /* BRIGHTNESS */
 
 #ifndef CELL_STATE_ALIVE
     #define CELL_STATE_ALIVE 1
-#endif
+#endif /* CELL_STATE_ALIVE */
+
 #ifndef CELL_STATE_DEAD
     #define CELL_STATE_DEAD 0
-#endif
+#endif /* CELL_STATE_DEAD */
 
 
 #include <Adafruit_GFX.h>
@@ -19,50 +25,63 @@
     #define PSTR /* Make Arduino Due happy */
 #endif
 
-unsigned char width = 0;
-unsigned char height = 0;
-
+// unsigned char width = 0;
+// unsigned char height = 0;
 // unsigned char i_col = 0;
 // unsigned char i_row = 0;
+
 #include "Board.h"
 
 class Conway {
-    private:
-        Board * board;
-        Board * board_next;
-        Board ** boards;
-        // Board ** boards_density;
+private:
+    Board * board;
+    Board * board_next;
 
-        unsigned char i_col;
-        unsigned char i_row;
+    Board ** boards;
+    // Board ** boards_density;
 
-        // unsigned char width;
-        // unsigned char height;
+    unsigned char i_col;
+    unsigned char i_row;
 
-        bool any_cells_alive;
+    unsigned char width;
+    unsigned char height;
 
-        Adafruit_NeoMatrix * led_matrix;
+    bool any_cells_alive;
 
-        unsigned char num_active_surrounding;
-        unsigned char bound_col_min;
-        unsigned char bound_col_max;
-        unsigned char bound_row_min;
-        unsigned char bound_row_max;
-        unsigned char i_col_check;
-        unsigned char i_row_check;
+    Adafruit_NeoMatrix * led_matrix;
 
-        void _print(bool current);
-        void _randomize();
+    unsigned char num_active_surrounding;
+    unsigned char bound_col_min;
+    unsigned char bound_col_max;
+    unsigned char bound_row_min;
+    unsigned char bound_row_max;
+    unsigned char i_col_check;
+    unsigned char i_row_check;
 
-    public:
-        Conway(int num_pixels_width, int num_pixels_height, int num_boards_x, int num_boards_y, int pin);
+    void _print(bool current);
+    void _randomize();
 
-        void init();
-        void update();
-        void draw();
+public:
+    Conway(
+        int num_pixels_width,
+        int num_pixels_height,
+        int num_boards_x,
+        int num_boards_y,
+        int pin
+    );
+
+    void init();
+    void update();
+    void draw();
 };
 
-Conway::Conway(int num_pixels_width, int num_pixels_height, int num_boards_x, int num_boards_y, int pin){
+Conway::Conway(
+    int num_pixels_width,
+    int num_pixels_height,
+    int num_boards_x,
+    int num_boards_y,
+    int pin
+) {
 
     led_matrix = new Adafruit_NeoMatrix(
         num_pixels_width,
@@ -116,7 +135,7 @@ void Conway::update(){
      * Check if anything on board
      */
     if(!any_cells_alive){
-        if(DEBUG) Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
+        if(CONWAY_DEBUG) Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
         _randomize();
         return;
     }
@@ -158,6 +177,7 @@ void Conway::update(){
                      * If not this spot
                      */
                     if(i_col_check == i_col && i_row_check == i_row) continue;
+
                     /**
                      * If active
                      */
@@ -213,6 +233,7 @@ void Conway::update(){
     /**
      * Copy Board
      */
+    // TODO remove need for
     board->reset();
     for(i_col = 0; i_col < width; i_col++){
         for(i_row = 0; i_row < height; i_row++){
@@ -247,7 +268,7 @@ void Conway::_print(bool current = true){
     Serial.print("\n");
 
     for (i_col = 0; i_col < width; i_col++) {
-        if(i_col == 0){
+        if(i_col == 0) {
             Serial.print("  ");
 
             if(height >= 10) Serial.print(" ");
@@ -260,8 +281,8 @@ void Conway::_print(bool current = true){
     Serial.print("\n");
 
     for(i_row = 0; i_row < height; i_row++){
-        if(height >= 10){
-            if(i_row < 10){
+        if(height >= 10) {
+            if(i_row < 10) {
                 Serial.print(" ");
             }
         }
@@ -285,11 +306,17 @@ void Conway::_randomize(){
 
     board->reset();
 
-    // board->setAlive(7, 2);
-    // board->setAlive(7, 3);
-    // board->setAlive(7, 4);
-    // any_cells_alive = true;
-    // return;
+    board->setAlive(7, 2);
+    board->setAlive(7, 3);
+    board->setAlive(7, 4);
+    any_cells_alive = true;
+    return;
+
+    board->setAlive(7, 2);
+    board->setAlive(7, 3);
+    board->setAlive(7, 4);
+    any_cells_alive = true;
+    return;
 
 
     /**
@@ -357,7 +384,7 @@ void Conway::draw(){
     // led_matrix->drawPixel(13, 13, colors[3]);
 
 
-    if(DEBUG){
+    if(CONWAY_DEBUG){
         Serial.println("MOVE");
         // Serial.println("\n\n\n\n\n\n");
         // _print();
