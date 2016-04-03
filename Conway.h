@@ -2,20 +2,28 @@
 #define Conway_h
 
 #ifndef CONWAY_DEBUG
-    #define CONWAY_DEBUG true
+    #define CONWAY_DEBUG false
 #endif /* CONWAY_DEBUG */
 
 #ifndef BRIGHTNESS
     #define BRIGHTNESS 40
 #endif /* BRIGHTNESS */
 
+#ifndef CELL_STATE_DEAD
+    #define CELL_STATE_DEAD 0
+#endif /* CELL_STATE_DEAD */
+
 #ifndef CELL_STATE_ALIVE
     #define CELL_STATE_ALIVE 1
 #endif /* CELL_STATE_ALIVE */
 
-#ifndef CELL_STATE_DEAD
-    #define CELL_STATE_DEAD 0
-#endif /* CELL_STATE_DEAD */
+#ifndef CELL_STATE_ALIVE_LOW
+    #define CELL_STATE_ALIVE_LOW  CELL_STATE_ALIVE + 1
+#endif /* CELL_STATE_ALIVE_LOW */
+
+#ifndef CELL_STATE_ALIVE_HIGH
+    #define CELL_STATE_ALIVE_HIGH CELL_STATE_ALIVE_LOW + 1
+#endif /* CELL_STATE_ALIVE_HIGH */
 
 
 #include <Adafruit_GFX.h>
@@ -38,6 +46,9 @@ private:
     Board * board_next;
 
     Board ** boards;
+    int length_of_history = 2;
+    int i_move = 0;
+
     // Board ** boards_density;
 
     unsigned char i_col;
@@ -181,7 +192,7 @@ void Conway::update(){
                     /**
                      * If active
                      */
-                    if(board->getState(i_col_check, i_row_check) == CELL_STATE_ALIVE) num_active_surrounding += 1;
+                    if(board->getState(i_col_check, i_row_check) >= CELL_STATE_ALIVE) num_active_surrounding += 1;
 
                     if (num_active_surrounding > 3) break;
                 }
@@ -192,16 +203,16 @@ void Conway::update(){
             /**
              * Decide if alive or CELL_STATE_DEAD
              */
-            if(board->getState(i_col, i_row) == CELL_STATE_ALIVE) {
+            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) {
                 if(num_active_surrounding == 2 || num_active_surrounding == 3){
-                    board_next->setAlive(i_col, i_row);
-                    // board_next->setState(i_col, i_row, num_active_surrounding);
+                    // board_next->setAlive(i_col, i_row);
+                    board_next->setState(i_col, i_row, num_active_surrounding);
                     any_cells_alive = true;
                 }
             }
             else if(num_active_surrounding == 3) {
-                board_next->setAlive(i_col, i_row);
-                // board_next->setState(i_col, i_row, num_active_surrounding);
+                // board_next->setAlive(i_col, i_row);
+                board_next->setState(i_col, i_row, num_active_surrounding);
                 any_cells_alive = true;
             }
         }
@@ -306,29 +317,23 @@ void Conway::_randomize(){
 
     board->reset();
 
-    board->setAlive(7, 2);
-    board->setAlive(7, 3);
-    board->setAlive(7, 4);
-    any_cells_alive = true;
-    return;
-
-    board->setAlive(7, 2);
-    board->setAlive(7, 3);
-    board->setAlive(7, 4);
-    any_cells_alive = true;
-    return;
+    // board->setAlive(7, 2);
+    // board->setAlive(7, 3);
+    // board->setAlive(7, 4);
+    // any_cells_alive = true;
+    // return;
 
 
     /**
      * Glider
      */
-    board->setAlive(1, 0);
-    board->setAlive(2, 1);
-    board->setAlive(0, 2);
-    board->setAlive(1, 2);
-    board->setAlive(2, 2);
-    any_cells_alive = true;
-    return;
+    // board->setAlive(1, 0);
+    // board->setAlive(2, 1);
+    // board->setAlive(0, 2);
+    // board->setAlive(1, 2);
+    // board->setAlive(2, 2);
+    // any_cells_alive = true;
+    // return;
 
 
     /**
@@ -395,8 +400,15 @@ void Conway::draw(){
         for(i_row = 0; i_row < height; i_row++){
             // led_matrix->drawPixel(i_col + i_col_count * width, i_row, led_matrix->Color(0, 255, 0));
             // if(board->getState(i_col, i_row) > CELL_STATE_ALIVE) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 0));
-            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 255));
+            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE_HIGH) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 0));
+            else if(board->getState(i_col, i_row) == CELL_STATE_ALIVE_LOW) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 255));
+            else if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 255, 255));
             else led_matrix->drawPixel(i_col, i_row, led_matrix->Color(0, 0, 0));
+
+
+
+            // if(board->getState(i_col, i_row) == CELL_STATE_ALIVE) led_matrix->drawPixel(i_col, i_row, led_matrix->Color(255, 0, 255));
+            // else led_matrix->drawPixel(i_col, i_row, led_matrix->Color(0, 0, 0));
         }
     }
 

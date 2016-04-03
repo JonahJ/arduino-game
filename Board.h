@@ -6,11 +6,12 @@
 //  Copyright © 2016 Jonah Joselow. All rights reserved.
 //
 
-// unsigned char i_col = 0;
-// unsigned char i_row = 0;
-
 #ifndef Board_h
 #define Board_h
+
+#ifndef BOARD_DEBUG
+    #define BOARD_DEBUG false
+#endif /* BOARD_DEBUG */
 
 #ifndef CELL_STATE_ALIVE
     #define CELL_STATE_ALIVE 1
@@ -21,7 +22,7 @@
 #endif /* CELL_STATE_DEAD */
 
 #ifndef CELLS_PER_BYTE
-    #define CELLS_PER_BYTE 8
+    #define CELLS_PER_BYTE 4
 #endif /* CELLS_PER_BYTE */
 
 #ifndef CELL_WIDTH
@@ -40,6 +41,10 @@ private:
     unsigned char i_col;
     unsigned char i_row;
 
+    unsigned char cell_col;
+    unsigned char i_cell_col;
+    unsigned char i_cell_col_value;
+    unsigned char cell_state;
 
 public:
     Board(unsigned char _width, unsigned char _height);
@@ -53,12 +58,11 @@ public:
     void reset();
 };
 
-Board::Board(unsigned char _width, unsigned char _height){
+Board::Board(unsigned char _width, unsigned char _height) {
     width = _width;
     height = _height;
 
     num_columns = width / CELLS_PER_BYTE;
-
 
     board = new unsigned char * [num_columns];
 
@@ -83,21 +87,18 @@ Board::Board(unsigned char _width, unsigned char _height){
     // }
 }
 
-int Board::getState(unsigned char x, unsigned char y){
+int Board::getState(unsigned char x, unsigned char y) {
     i_col_count = x / CELLS_PER_BYTE;
     i_col = x % CELLS_PER_BYTE;
     i_row = y;
 
-    int state = 0;
+    cell_state = 0;
 
-    for (int i = 0; i < CELL_WIDTH; i++) {
+    for (i_cell_col = 0; i_cell_col < CELL_WIDTH; i_cell_col++) {
+        cell_col = i_col * CELL_WIDTH + i_cell_col;
+        i_cell_col_value = ((board[i_col_count][i_row] >> cell_col) & 1);
 
-        int i_bit = i_col * CELL_WIDTH + i;
-        int i_value = ((board[i_col_count][i_row] >> i_bit) & 1);
-
-        int value_at_index = (i_value << i);
-
-        state = (state | value_at_index);
+        cell_state = (cell_state | (i_cell_col_value << i_cell_col));
     }
 
     // if(state != 0){
@@ -106,40 +107,43 @@ int Board::getState(unsigned char x, unsigned char y){
     //     Serial.println("G: " + String(i_col_count));
     //     Serial.println("C: " + String(i_col));
     //     Serial.println("R: " + String(i_row));
-    //     Serial.println(" V: " + String(state));
+    //     Serial.println(" V: " + String(cell_state));
     // }
 
-    return state;
+    return cell_state;
 }
 
-void Board::setState(unsigned char x, unsigned char y, int state){
+void Board::setState(unsigned char x, unsigned char y, int state) {
     i_col_count = x / CELLS_PER_BYTE;
     i_col = x % CELLS_PER_BYTE;
     i_row = y;
 
-    int i_value_to_store = 0;
-    int i_bit = 0;
+    cell_state = 0;
 
-    for (int i = 0; i < CELL_WIDTH; i++) {
-        i_value_to_store = (state >> i) & 1;
-        i_bit = i_col * CELL_WIDTH + i;
+    if(state > CELL_STATE_ALIVE) /* Avoid taking pow */
+        if(state > pow(2, (CELL_WIDTH)) - 1) {
+            if(BOARD_DEBUG) Serial.println("Warning, state is too high for CELL_WIDTH. Setting to max.");
+            state = pow(2, (CELL_WIDTH)) - 1;
+        }
 
-        board[i_col_count][i_row] ^= (-i_value_to_store ^ board[i_col_count][i_row]) & (1 << i_bit);
+    for (i_cell_col = 0; i_cell_col < CELL_WIDTH; i_cell_col++) {
+        cell_state = (state >> i_cell_col) & 1;
+        cell_col = i_col * CELL_WIDTH + i_cell_col;
+
+        board[i_col_count][i_row] ^= (-cell_state ^ board[i_col_count][i_row]) & (1 << cell_col);
     }
 
     return;
-
-
 }
 
-void Board::setAlive(unsigned char x, unsigned char y){
+void Board::setAlive(unsigned char x, unsigned char y) {
     setState(x, y, CELL_STATE_ALIVE);
 }
-void Board::setDead(unsigned char x, unsigned char y){
+void Board::setDead(unsigned char x, unsigned char y) {
     setState(x, y, CELL_STATE_DEAD);
 }
 
-void Board::reset(){
+void Board::reset() {
     for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
         for(i_row = 0; i_row < height; i_row++) {
             board[i_col_count][i_row] = NULL;

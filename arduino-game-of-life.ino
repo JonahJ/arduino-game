@@ -1,7 +1,7 @@
 #include "Conway.h"
 
 #ifndef SPEED
-  #define SPEED 1000
+  #define SPEED 100
 #endif /* SPEED */
 
 Conway game_of_life = Conway(8, 8, 2, 2, 6);
