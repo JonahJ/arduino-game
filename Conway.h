@@ -45,8 +45,6 @@ private:
     Board * board;
     Board * board_next;
 
-    Board ** boards;
-    int length_of_history = 2;
     int i_move = 0;
 
     // Board ** boards_density;

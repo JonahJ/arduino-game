@@ -22,7 +22,7 @@
 #endif /* CELL_STATE_DEAD */
 
 #ifndef CELLS_PER_BYTE
-    #define CELLS_PER_BYTE 4
+    #define CELLS_PER_BYTE 8
 #endif /* CELLS_PER_BYTE */
 
 #ifndef CELL_WIDTH

@@ -5,7 +5,6 @@
 #endif /* SPEED */
 
 Conway game_of_life = Conway(8, 8, 2, 2, 6);
-
 void setup() {
     Serial.begin(9600);
 
