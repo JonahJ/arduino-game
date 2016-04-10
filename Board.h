@@ -70,7 +70,7 @@ public:
 
     void reset();
 
-    void copyBoard(Board * other_board );
+    void copyBoard(Board * other_board);
 };
 
 Board::Board(uint8_t _width, uint8_t _height) {

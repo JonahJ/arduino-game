@@ -38,19 +38,25 @@
 #endif /* CONWAY_ASSIGN_DENSITY */
 
 /**
- * Draw board one row at a time. Note some cells will be periodically drawn
- * wrong on initial state due to NeoPixel internals
+ * Draw board one row at a time.
  */
 #ifndef CONWAY_WIPE_EFFECT
-    #define CONWAY_WIPE_EFFECT false
+    #define CONWAY_WIPE_EFFECT true
 #endif CONWAY_WIPE_EFFECT
 
 /**
  * Redraws board one cell at a time. This will make the effect quite slow.
  */
 #ifndef CONWAY_WIPE_EFFECT_PER_CELL
-    #define CONWAY_WIPE_EFFECT_PER_CELL true
+    #define CONWAY_WIPE_EFFECT_PER_CELL false
 #endif CONWAY_WIPE_EFFECT_PER_CELL
+
+/**
+ * Shows a marker where it is drawing
+ */
+#ifndef CONWAY_WIPE_EFFECT_DRAW_MARKER
+    #define CONWAY_WIPE_EFFECT_DRAW_MARKER true
+#endif CONWAY_WIPE_EFFECT_DRAW_MARKER
 
 /*******************************************************************************
  *                                Cell States                                  *
@@ -72,9 +78,14 @@
     #define CELL_STATE_ALIVE_HIGH CELL_STATE_ALIVE_LOW + 1
 #endif /* CELL_STATE_ALIVE_HIGH */
 
+#ifndef CELL_STATE_WIPE
+    #define CELL_STATE_WIPE CELL_STATE_ALIVE_HIGH + 1
+#endif /* CELL_STATE_WIPE */
+
 #ifndef CELL_STATE_MAX
-    #define CELL_STATE_MAX CELL_STATE_ALIVE_HIGH
+    #define CELL_STATE_MAX CELL_STATE_WIPE
 #endif /* CELL_STATE_MAX */
+
 
 /*******************************************************************************
  *                                  Includes                                   *
@@ -111,7 +122,7 @@ private:
 
     Adafruit_NeoMatrix * led_matrix;
 
-    uint8_t num_active_surrounding;
+    uint8_t num_cells_active_surrounding;
     uint8_t bound_col_min;
     uint8_t bound_col_max;
     uint8_t bound_row_min;
@@ -121,7 +132,7 @@ private:
 
     void _print(bool current);
     void _randomize();
-    uint8_t _getNumberCellsActiveSurrounding(uint8_t x, uint8_t y, bool next);
+    void _assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y);
     void _assignCurrentDensity();
 
 public:
@@ -175,10 +186,11 @@ Conway::Conway(
      * Init Colors
      */
     colors = new uint16_t [CELL_STATE_MAX];
-    colors[CELL_STATE_DEAD] = led_matrix->Color(0, 0, 0);
-    colors[CELL_STATE_ALIVE] = led_matrix->Color(255, 255, 255);
-    colors[CELL_STATE_ALIVE_LOW] = led_matrix->Color(200, 50, 0);
-    colors[CELL_STATE_ALIVE_HIGH] = led_matrix->Color(255, 0, 0);
+    colors[CELL_STATE_DEAD]         = led_matrix->Color(0, 0, 0);
+    colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 255, 255);
+    colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
+    colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 0, 0);
+    colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 0);
 }
 
 void Conway::_print(bool current = true) {
@@ -300,8 +312,8 @@ void Conway::_randomize() {
     }
 }
 
-uint8_t Conway::_getNumberCellsActiveSurrounding(uint8_t x, uint8_t y, bool next) {
-    num_active_surrounding = 0;
+void Conway::_assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y) {
+    num_cells_active_surrounding = 0;
     bound_col_min = x;
     bound_col_max = x;
     bound_row_min = y;
@@ -324,25 +336,18 @@ uint8_t Conway::_getNumberCellsActiveSurrounding(uint8_t x, uint8_t y, bool next
             /**
              * If not this spot
              */
-            if(next && i_col_check == x && i_row_check == y) continue;
+            if(i_col_check == x && i_row_check == y) continue;
 
             /**
              * If active
              */
-            if(board->getState(i_col_check, i_row_check) >= CELL_STATE_ALIVE) num_active_surrounding += 1;
+            if(board->getState(i_col_check, i_row_check) >= CELL_STATE_ALIVE) num_cells_active_surrounding += 1;
 
-            if(next)
-                if(num_active_surrounding > 3) break;
-            else if(num_active_surrounding > CELL_STATE_ALIVE_HIGH) break;
+            if(num_cells_active_surrounding > CELL_STATE_ALIVE_HIGH) break;
         }
 
-
-        if(next)
-            if(num_active_surrounding > 3) break;
-        else if(num_active_surrounding > CELL_STATE_ALIVE_HIGH) break;
+        if(num_cells_active_surrounding > CELL_STATE_ALIVE_HIGH) break;
     }
-
-    return num_active_surrounding;
 }
 
 void Conway::_assignCurrentDensity() {
@@ -356,7 +361,10 @@ void Conway::_assignCurrentDensity() {
             /**
              * Update state
              */
-            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) board->setState(i_col, i_row, _getNumberCellsActiveSurrounding(i_col, i_row, false));
+            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) {
+                _assignNumberCellsActiveSurrounding(i_col, i_row);
+                board->setState(i_col, i_row, num_cells_active_surrounding + CELL_STATE_ALIVE_LOW);
+            }
         }
     }
 }
@@ -379,6 +387,7 @@ void Conway::update() {
     if(!any_cells_alive) {
         if(CONWAY_DEBUG) Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
         _randomize();
+        _assignCurrentDensity();
         return;
     }
 
@@ -393,21 +402,21 @@ void Conway::update() {
      */
     for(i_col = 0; i_col < width; i_col++) {
         for(i_row = 0; i_row < height; i_row++) {
-            num_active_surrounding = _getNumberCellsActiveSurrounding(i_col, i_row, true);
+            _assignNumberCellsActiveSurrounding(i_col, i_row);
 
             /**
              * Decide if alive or CELL_STATE_DEAD
              */
             if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) {
-                if(num_active_surrounding == 2 || num_active_surrounding == 3) {
-                    if(CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_active_surrounding);
+                if(num_cells_active_surrounding == 2 || num_cells_active_surrounding == 3) {
+                    if(CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_cells_active_surrounding);
                     else board_next->setAlive(i_col, i_row);
 
                     any_cells_alive = true;
                 }
             }
-            else if(num_active_surrounding == 3) {
-                if(CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_active_surrounding);
+            else if(num_cells_active_surrounding == 3) {
+                if(CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_cells_active_surrounding);
                 else board_next->setAlive(i_col, i_row);
 
                 any_cells_alive = true;
@@ -431,6 +440,7 @@ void Conway::update() {
         if(!board_different) {
             Serial.println("Board Stuck in same state");
             _randomize();
+            _assignCurrentDensity();
             return;
         }
     }
@@ -457,10 +467,32 @@ void Conway::draw() {
         for(i_row = 0; i_row < height; i_row++) {
             led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
 
-            if(CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL) led_matrix->show();
+            // if(CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL) led_matrix->show();
+
+            if(CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL) {
+                if(CONWAY_WIPE_EFFECT_DRAW_MARKER) led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_WIPE]);
+                led_matrix->show();
+                if(CONWAY_WIPE_EFFECT_DRAW_MARKER) led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
+            }
+
+
         }
 
-        if(CONWAY_WIPE_EFFECT) led_matrix->show();
+        if(CONWAY_WIPE_EFFECT) {
+            if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
+                for(i_row = 0; i_row < height; i_row++) {
+                    led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_WIPE]);
+                }
+            }
+
+            led_matrix->show();
+
+             if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
+                for(i_row = 0; i_row < height; i_row++) {
+                    led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
+                }
+            }
+        }
     }
 
     led_matrix->show();
