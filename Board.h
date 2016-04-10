@@ -1,17 +1,21 @@
-//
-//  Board.h
-//  char
-//
-//  Created by Jonah Joselow on 3/23/16.
-//  Copyright © 2016 Jonah Joselow. All rights reserved.
-//
-
 #ifndef Board_h
 #define Board_h
 
+/*******************************************************************************
+ *                               Board Settings                                *
+ *******************************************************************************/
+
+/**
+ * Debug mode enabled additional checking and printouts. May negatively affect
+ * performance
+ */
 #ifndef BOARD_DEBUG
     #define BOARD_DEBUG false
 #endif /* BOARD_DEBUG */
+
+/*******************************************************************************
+ *                                Cell States                                  *
+ *******************************************************************************/
 
 #ifndef CELL_STATE_ALIVE
     #define CELL_STATE_ALIVE 1
@@ -21,53 +25,64 @@
     #define CELL_STATE_DEAD 0
 #endif /* CELL_STATE_DEAD */
 
+/**
+ * How many cells are to be stored in a single 8-bites, i.e. 1 byte. The more
+ * stored together will decrease memory usage and allow the CPU to run quicker
+ * due to less context switching. The lower this number goes the more
+ * information that we can store per cell.
+ */
 #ifndef CELLS_PER_BYTE
-    #define CELLS_PER_BYTE 8
+    #define CELLS_PER_BYTE (uint8_t)4
 #endif /* CELLS_PER_BYTE */
 
+/**
+ * How large a cell is in bits
+ */
 #ifndef CELL_WIDTH
-    #define CELL_WIDTH 8 / CELLS_PER_BYTE
+    #define CELL_WIDTH (uint8_t)8 / CELLS_PER_BYTE
 #endif /* CELL_WIDTH */
 
 class Board {
 private:
-    unsigned char ** board;
+    uint8_t ** board;
 
-    unsigned char width;
-    unsigned char height;
-    unsigned char num_columns;
+    uint8_t width;
+    uint8_t height;
+    uint8_t num_columns;
 
-    unsigned char i_col_count;
-    unsigned char i_col;
-    unsigned char i_row;
+    uint8_t i_col_count;
+    uint8_t i_col;
+    uint8_t i_row;
 
-    unsigned char cell_col;
-    unsigned char i_cell_col;
-    unsigned char i_cell_col_value;
-    unsigned char cell_state;
+    uint8_t cell_col;
+    uint8_t i_cell_col;
+    uint8_t i_cell_col_value;
+    uint8_t cell_state;
 
 public:
-    Board(unsigned char _width, unsigned char _height);
+    Board(uint8_t _width, uint8_t _height);
 
-    int getState(unsigned char x, unsigned char y);
+    uint8_t getState(uint8_t x, uint8_t y);
 
-    void setState(unsigned char x, unsigned char y, int state);
-    void setAlive(unsigned char x, unsigned char y);
-    void setDead(unsigned char x, unsigned char y);
+    void setState(uint8_t x, uint8_t y, uint8_t state);
+    void setAlive(uint8_t x, uint8_t y);
+    void setDead(uint8_t x, uint8_t y);
 
     void reset();
+
+    void copyBoard(Board * other_board );
 };
 
-Board::Board(unsigned char _width, unsigned char _height) {
+Board::Board(uint8_t _width, uint8_t _height) {
     width = _width;
     height = _height;
 
     num_columns = width / CELLS_PER_BYTE;
 
-    board = new unsigned char * [num_columns];
+    board = new uint8_t * [num_columns];
 
     for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        board[i_col_count] = new unsigned char [height];
+        board[i_col_count] = new uint8_t [height];
         for(i_row = 0; i_row < height; i_row++){
             board[i_col_count][i_row] = NULL;
             board[i_col_count][i_row] = CELL_STATE_DEAD;
@@ -87,7 +102,7 @@ Board::Board(unsigned char _width, unsigned char _height) {
     // }
 }
 
-int Board::getState(unsigned char x, unsigned char y) {
+uint8_t Board::getState(uint8_t x, uint8_t y) {
     i_col_count = x / CELLS_PER_BYTE;
     i_col = x % CELLS_PER_BYTE;
     i_row = y;
@@ -113,7 +128,7 @@ int Board::getState(unsigned char x, unsigned char y) {
     return cell_state;
 }
 
-void Board::setState(unsigned char x, unsigned char y, int state) {
+void Board::setState(uint8_t x, uint8_t y, uint8_t state) {
     i_col_count = x / CELLS_PER_BYTE;
     i_col = x % CELLS_PER_BYTE;
     i_row = y;
@@ -136,10 +151,10 @@ void Board::setState(unsigned char x, unsigned char y, int state) {
     return;
 }
 
-void Board::setAlive(unsigned char x, unsigned char y) {
+void Board::setAlive(uint8_t x, uint8_t y) {
     setState(x, y, CELL_STATE_ALIVE);
 }
-void Board::setDead(unsigned char x, unsigned char y) {
+void Board::setDead(uint8_t x, uint8_t y) {
     setState(x, y, CELL_STATE_DEAD);
 }
 
@@ -155,6 +170,18 @@ void Board::reset() {
             for(i_row = 0; i_row < height; i_row++) {
                 board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_DEAD << i_col));
             }
+        }
+    }
+}
+
+void Board::copyBoard(Board * other_board) {
+    /**
+     * Requires redeclaration of i_col and i_row because this function uses
+     * internal functions
+     */
+    for(uint8_t i_col = 0; i_col < width; i_col++) {
+        for(uint8_t i_row = 0; i_row < height; i_row++) {
+            setState(i_col, i_row, other_board->getState(i_col, i_row));
         }
     }
 }
