@@ -29,6 +29,13 @@
 #endif /* CONWAY_CHECK_HISTORY */
 
 /**
+ * Clear board on redraw
+ */
+#ifndef CLEAR_ON_REDRAW
+    #define CLEAR_ON_REDRAW true
+#endif CLEAR_ON_REDRAW
+
+/**
  * Use density for positions. Requires more space, but will show colors
  * depending on how many cells are active around a given cell. Note will require
  * at least 2 bits for a given cell
@@ -38,17 +45,25 @@
 #endif /* CONWAY_ASSIGN_DENSITY */
 
 /**
+ * Draw board spiral style
+ */
+#ifndef CONWAY_DRAW_SPIRAL
+    #define CONWAY_DRAW_SPIRAL true
+#endif CONWAY_DRAW_SPIRAL
+
+/**
  * Draw board one row at a time.
  */
 #ifndef CONWAY_WIPE_EFFECT
     #define CONWAY_WIPE_EFFECT true
 #endif CONWAY_WIPE_EFFECT
 
+
 /**
  * Redraws board one cell at a time. This will make the effect quite slow.
  */
 #ifndef CONWAY_WIPE_EFFECT_PER_CELL
-    #define CONWAY_WIPE_EFFECT_PER_CELL false
+    #define CONWAY_WIPE_EFFECT_PER_CELL true
 #endif CONWAY_WIPE_EFFECT_PER_CELL
 
 /**
@@ -134,6 +149,7 @@ private:
     void _randomize();
     void _assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y);
     void _assignCurrentDensity();
+    void _drawCell(uint8_t x, uint8_t y);
 
 public:
     Conway(
@@ -253,6 +269,9 @@ void Conway::_print(bool current = true) {
 void Conway::_randomize() {
     board->reset();
 
+    /**
+     * Short line
+     */
     // board->setAlive(7, 2);
     // board->setAlive(7, 3);
     // board->setAlive(7, 4);
@@ -369,6 +388,19 @@ void Conway::_assignCurrentDensity() {
     }
 }
 
+void Conway::_drawCell(uint8_t x, uint8_t y) {
+    if(CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL) {
+        if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
+            led_matrix->drawPixel(x, y, colors[CELL_STATE_WIPE]);
+            led_matrix->show();
+        }
+        led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
+        if(!CONWAY_WIPE_EFFECT_DRAW_MARKER) led_matrix->show();
+    } else {
+        led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
+    }
+}
+
 void Conway::init() {
     led_matrix->begin();
     led_matrix->setBrightness(BRIGHTNESS);
@@ -461,35 +493,77 @@ void Conway::draw() {
         _print(false);
     }
 
-    if(CONWAY_WIPE_EFFECT) led_matrix->clear();
+    if(CONWAY_WIPE_EFFECT && CLEAR_ON_REDRAW) {
+        led_matrix->clear();
 
-    for(i_col = 0; i_col < width; i_col++) {
-        for(i_row = 0; i_row < height; i_row++) {
-            led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
+        // if(CONWAY_DRAW_SPIRAL) {
+        //     for(i_col = 0; i_col < width; i_col++) {
+        //         for(i_row = 0; i_row < height; i_row++) {
+        //             // led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_DEAD]);
+        //         }
+        //     }
+        // }
+        led_matrix->show();
+    }
 
-            // if(CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL) led_matrix->show();
+    if(CONWAY_DRAW_SPIRAL) {
 
-            if(CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL) {
-                if(CONWAY_WIPE_EFFECT_DRAW_MARKER) led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_WIPE]);
-                led_matrix->show();
-                if(CONWAY_WIPE_EFFECT_DRAW_MARKER) led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
-            }
+        uint8_t spiral_spins = width / 2;
 
+        uint8_t spiral_width = width;
+        uint8_t spiral_height = width;
 
-        }
+        for(uint8_t i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
 
-        if(CONWAY_WIPE_EFFECT) {
-            if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
-                for(i_row = 0; i_row < height; i_row++) {
-                    led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_WIPE]);
+            for(i_col = width - spiral_width; i_col < spiral_width; i_col++) {
+                _drawCell(i_col, i_row);
+
+                if(i_col == spiral_width - 1) {
+                    for(i_row = height - spiral_height; i_row < spiral_height; i_row++) {
+                        _drawCell(i_col, i_row);
+                    }
                 }
             }
 
-            led_matrix->show();
+            i_row--;
 
-             if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
-                for(i_row = 0; i_row < height; i_row++) {
-                    led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
+            for(; i_col > width - spiral_width; i_col--) {
+                _drawCell(i_col, i_row);
+            }
+
+
+            for(; i_row > height - spiral_height; i_row--){
+                _drawCell(i_col, i_row);
+            }
+
+            spiral_height--;
+            spiral_width--;
+        }
+
+        led_matrix->show();
+
+
+
+
+    } else {
+        for(i_col = 0; i_col < width; i_col++) {
+            for(i_row = 0; i_row < height; i_row++) {
+                _drawCell(i_col, i_row);
+            }
+
+            if(CONWAY_WIPE_EFFECT) {
+                if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
+                    for(i_row = 0; i_row < height; i_row++) {
+                        led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_WIPE]);
+                    }
+                }
+
+                led_matrix->show();
+
+                 if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
+                    for(i_row = 0; i_row < height; i_row++) {
+                        led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
+                    }
                 }
             }
         }
