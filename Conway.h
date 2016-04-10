@@ -37,6 +37,21 @@
     #define CONWAY_ASSIGN_DENSITY true
 #endif /* CONWAY_ASSIGN_DENSITY */
 
+/**
+ * Draw board one row at a time. Note some cells will be periodically drawn
+ * wrong on initial state due to NeoPixel internals
+ */
+#ifndef CONWAY_WIPE_EFFECT
+    #define CONWAY_WIPE_EFFECT false
+#endif CONWAY_WIPE_EFFECT
+
+/**
+ * Redraws board one cell at a time. This will make the effect quite slow.
+ */
+#ifndef CONWAY_WIPE_EFFECT_PER_CELL
+    #define CONWAY_WIPE_EFFECT_PER_CELL true
+#endif CONWAY_WIPE_EFFECT_PER_CELL
+
 /*******************************************************************************
  *                                Cell States                                  *
  *******************************************************************************/
@@ -106,6 +121,8 @@ private:
 
     void _print(bool current);
     void _randomize();
+    uint8_t _getNumberCellsActiveSurrounding(uint8_t x, uint8_t y, bool next);
+    void _assignCurrentDensity();
 
 public:
     Conway(
@@ -146,7 +163,7 @@ Conway::Conway(
     /**
      * Detect largest width of % 8
      */
-    // if(width % 8 != 0){
+    // if(width % 8 != 0) {
     //     return;
     // }
 
@@ -164,127 +181,10 @@ Conway::Conway(
     colors[CELL_STATE_ALIVE_HIGH] = led_matrix->Color(255, 0, 0);
 }
 
+void Conway::_print(bool current = true) {
 
-void Conway::init() {
-    led_matrix->begin();
-    led_matrix->setBrightness(BRIGHTNESS);
-    led_matrix->fillScreen(led_matrix->Color(0, 0, 0));
-    led_matrix->show();
-
-    _randomize();
-}
-
-
-void Conway::update() {
-
-    /**
-     * Check if anything on board
-     */
-    if(!any_cells_alive) {
-        if(CONWAY_DEBUG) Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
-        _randomize();
-        return;
-    }
-
-    /**
-     * Reset board next
-     */
-    board_next->reset();
-    any_cells_alive = false;
-
-    /**
-     * Compute what is alive in the next round
-     */
-    for(i_col = 0; i_col < width; i_col++) {
-        for(i_row = 0; i_row < height; i_row++) {
-            num_active_surrounding = 0;
-            bound_col_min = i_col;
-            bound_col_max = i_col;
-            bound_row_min = i_row;
-            bound_row_max = i_row;
-
-            /**
-             * Check left, right, up, down
-             */
-            if(i_col > 0)           bound_col_min -= 1;
-            if(i_col < width - 1)   bound_col_max += 1;
-            if(i_row > 0)           bound_row_min -= 1;
-            if(i_row < height - 1)  bound_row_max += 1;
-
-            /**
-             * Check Sorrounding
-             */
-            for(i_col_check = bound_col_min; i_col_check <= bound_col_max; i_col_check++) {
-                for(i_row_check = bound_row_min; i_row_check <= bound_row_max; i_row_check++) {
-
-                    /**
-                     * If not this spot
-                     */
-                    if(i_col_check == i_col && i_row_check == i_row) continue;
-
-                    /**
-                     * If active
-                     */
-                    if(board->getState(i_col_check, i_row_check) >= CELL_STATE_ALIVE) num_active_surrounding += 1;
-
-                    if (num_active_surrounding > 3) break;
-                }
-
-                if (num_active_surrounding > 3) break;
-            }
-
-            /**
-             * Decide if alive or CELL_STATE_DEAD
-             */
-            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) {
-                if(num_active_surrounding == 2 || num_active_surrounding == 3) {
-                    if(CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_active_surrounding);
-                    else board_next->setAlive(i_col, i_row);
-
-                    any_cells_alive = true;
-                }
-            }
-            else if(num_active_surrounding == 3) {
-                if(CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_active_surrounding);
-                else board_next->setAlive(i_col, i_row);
-
-                any_cells_alive = true;
-            }
-        }
-    }
-
-    if (CONWAY_CHECK_HISTORY) {
-        board_different = false;
-
-        for(i_col = 0; i_col < width; i_col++) {
-            for(i_row = 0; i_row < height; i_row++) {
-                if(board->getState(i_col, i_row) != board_next->getState(i_col, i_row)) {
-                    board_different = true;
-                    break;
-                }
-            }
-            if(board_different) break;
-        }
-
-        if(!board_different) {
-            Serial.println("Board Stuck in same state");
-            _randomize();
-            return;
-        }
-    }
-
-    /**
-     * Copy Board
-     */
-    board->copyBoard(board_next);
-
-    return;
-}
-
-void Conway::_print(bool current = true){
-
-    if(current) Serial.println("Pruint8_t Current");
-    else Serial.println("Pruint8_t Next");
+    if(current) Serial.println("Printing Current");
+    else Serial.println("Printing Next");
 
     Serial.println("Printing Board");
     Serial.println("Width " + String(width));
@@ -398,7 +298,54 @@ void Conway::_randomize() {
             }
         }
     }
+}
 
+uint8_t Conway::_getNumberCellsActiveSurrounding(uint8_t x, uint8_t y, bool next) {
+    num_active_surrounding = 0;
+    bound_col_min = x;
+    bound_col_max = x;
+    bound_row_min = y;
+    bound_row_max = y;
+
+    /**
+     * Check left, right, up, down
+     */
+    if(x > 0)           bound_col_min -= 1;
+    if(x < width - 1)   bound_col_max += 1;
+    if(y > 0)           bound_row_min -= 1;
+    if(y < height - 1)  bound_row_max += 1;
+
+    /**
+     * Check Sorrounding
+     */
+    for(i_col_check = bound_col_min; i_col_check <= bound_col_max; i_col_check++) {
+        for(i_row_check = bound_row_min; i_row_check <= bound_row_max; i_row_check++) {
+
+            /**
+             * If not this spot
+             */
+            if(next && i_col_check == x && i_row_check == y) continue;
+
+            /**
+             * If active
+             */
+            if(board->getState(i_col_check, i_row_check) >= CELL_STATE_ALIVE) num_active_surrounding += 1;
+
+            if(next)
+                if(num_active_surrounding > 3) break;
+            else if(num_active_surrounding > CELL_STATE_ALIVE_HIGH) break;
+        }
+
+
+        if(next)
+            if(num_active_surrounding > 3) break;
+        else if(num_active_surrounding > CELL_STATE_ALIVE_HIGH) break;
+    }
+
+    return num_active_surrounding;
+}
+
+void Conway::_assignCurrentDensity() {
     /**
      * Update states to heatmap
      */
@@ -406,42 +353,94 @@ void Conway::_randomize() {
 
     for(i_col = 0; i_col < width; i_col++) {
         for(i_row = 0; i_row < height; i_row++) {
-            num_active_surrounding = 0;
-            bound_col_min = i_col;
-            bound_col_max = i_col;
-            bound_row_min = i_row;
-            bound_row_max = i_row;
-
-            /**
-             * Check left, right, up, down
-             */
-            if(i_col > 0)           bound_col_min -= 1;
-            if(i_col < width - 1)   bound_col_max += 1;
-            if(i_row > 0)           bound_row_min -= 1;
-            if(i_row < height - 1)  bound_row_max += 1;
-
-            /**
-             * Check Sorrounding
-             */
-            for(i_col_check = bound_col_min; i_col_check <= bound_col_max; i_col_check++) {
-                for(i_row_check = bound_row_min; i_row_check <= bound_row_max; i_row_check++) {
-                    /**
-                     * If active
-                     */
-                    if(board->getState(i_col_check, i_row_check) >= CELL_STATE_ALIVE) num_active_surrounding += 1;
-
-                    if (num_active_surrounding >= CELL_STATE_ALIVE_HIGH) break;
-                }
-
-                if (num_active_surrounding >= CELL_STATE_ALIVE_HIGH) break;
-            }
-
             /**
              * Update state
              */
-            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) board->setState(i_col, i_row, num_active_surrounding);
+            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) board->setState(i_col, i_row, _getNumberCellsActiveSurrounding(i_col, i_row, false));
         }
     }
+}
+
+void Conway::init() {
+    led_matrix->begin();
+    led_matrix->setBrightness(BRIGHTNESS);
+    led_matrix->fillScreen(led_matrix->Color(0, 0, 0));
+    led_matrix->show();
+
+    _randomize();
+    _assignCurrentDensity();
+}
+
+void Conway::update() {
+
+    /**
+     * Check if anything on board
+     */
+    if(!any_cells_alive) {
+        if(CONWAY_DEBUG) Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
+        _randomize();
+        return;
+    }
+
+    /**
+     * Reset board next
+     */
+    board_next->reset();
+    any_cells_alive = false;
+
+    /**
+     * Compute what is alive in the next round
+     */
+    for(i_col = 0; i_col < width; i_col++) {
+        for(i_row = 0; i_row < height; i_row++) {
+            num_active_surrounding = _getNumberCellsActiveSurrounding(i_col, i_row, true);
+
+            /**
+             * Decide if alive or CELL_STATE_DEAD
+             */
+            if(board->getState(i_col, i_row) >= CELL_STATE_ALIVE) {
+                if(num_active_surrounding == 2 || num_active_surrounding == 3) {
+                    if(CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_active_surrounding);
+                    else board_next->setAlive(i_col, i_row);
+
+                    any_cells_alive = true;
+                }
+            }
+            else if(num_active_surrounding == 3) {
+                if(CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_active_surrounding);
+                else board_next->setAlive(i_col, i_row);
+
+                any_cells_alive = true;
+            }
+        }
+    }
+
+    if (CONWAY_CHECK_HISTORY) {
+        board_different = false;
+
+        for(i_col = 0; i_col < width; i_col++) {
+            for(i_row = 0; i_row < height; i_row++) {
+                if(board->getState(i_col, i_row) != board_next->getState(i_col, i_row)) {
+                    board_different = true;
+                    break;
+                }
+            }
+            if(board_different) break;
+        }
+
+        if(!board_different) {
+            Serial.println("Board Stuck in same state");
+            _randomize();
+            return;
+        }
+    }
+
+    /**
+     * Copy Board
+     */
+    board->copyBoard(board_next);
+
+    return;
 }
 
 void Conway::draw() {
@@ -452,11 +451,16 @@ void Conway::draw() {
         _print(false);
     }
 
-    // Serial.println("---------------");
+    if(CONWAY_WIPE_EFFECT) led_matrix->clear();
+
     for(i_col = 0; i_col < width; i_col++) {
         for(i_row = 0; i_row < height; i_row++) {
             led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
+
+            if(CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL) led_matrix->show();
         }
+
+        if(CONWAY_WIPE_EFFECT) led_matrix->show();
     }
 
     led_matrix->show();
