@@ -45,7 +45,7 @@
 #endif /* CONWAY_ASSIGN_DENSITY */
 
 /**
- * Draw board spiral style
+ * Draw board spiral style. Assumes board is equal in width and height
  */
 #ifndef CONWAY_DRAW_SPIRAL
     #define CONWAY_DRAW_SPIRAL true
@@ -144,6 +144,12 @@ private:
     uint8_t bound_row_max;
     uint8_t i_col_check;
     uint8_t i_row_check;
+
+    #if (CONWAY_DRAW_SPIRAL)
+        uint8_t spiral_spins;
+        uint8_t spiral_width;
+        uint8_t spiral_height;
+    #endif
 
     void _print(bool current);
     void _randomize();
@@ -494,24 +500,23 @@ void Conway::draw() {
     }
 
     if(CONWAY_WIPE_EFFECT && CLEAR_ON_REDRAW) {
-        led_matrix->clear();
+        if(CONWAY_DRAW_SPIRAL) {
+            for(i_col = 0; i_col < width; i_col++) {
+                for(i_row = 0; i_row < height; i_row++) {
+                    led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_DEAD]);
+                }
+            }
+        } else {
+            led_matrix->clear();
+        }
 
-        // if(CONWAY_DRAW_SPIRAL) {
-        //     for(i_col = 0; i_col < width; i_col++) {
-        //         for(i_row = 0; i_row < height; i_row++) {
-        //             // led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_DEAD]);
-        //         }
-        //     }
-        // }
         led_matrix->show();
     }
 
-    if(CONWAY_DRAW_SPIRAL) {
-
-        uint8_t spiral_spins = width / 2;
-
-        uint8_t spiral_width = width;
-        uint8_t spiral_height = width;
+    #if (CONWAY_DRAW_SPIRAL)
+        spiral_spins = width / 2;
+        spiral_width = width;
+        spiral_height = width;
 
         for(uint8_t i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
 
@@ -541,11 +546,7 @@ void Conway::draw() {
         }
 
         led_matrix->show();
-
-
-
-
-    } else {
+    #else
         for(i_col = 0; i_col < width; i_col++) {
             for(i_row = 0; i_row < height; i_row++) {
                 _drawCell(i_col, i_row);
@@ -567,7 +568,7 @@ void Conway::draw() {
                 }
             }
         }
-    }
+    #endif
 
     led_matrix->show();
 }
