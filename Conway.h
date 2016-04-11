@@ -32,7 +32,7 @@
  * Clear board on redraw
  */
 #ifndef CLEAR_ON_REDRAW
-    #define CLEAR_ON_REDRAW true
+    #define CLEAR_ON_REDRAW false
 #endif CLEAR_ON_REDRAW
 
 /**
@@ -57,6 +57,14 @@
 #ifndef CONWAY_WIPE_EFFECT
     #define CONWAY_WIPE_EFFECT true
 #endif CONWAY_WIPE_EFFECT
+
+/**
+ * Additional delay between pixel draws. This is in addition to the delay
+ * imposed by redrawing by the NeoMatrix library
+ */
+#ifndef CONWAY_WIPE_EFFECT_DELAY
+    #define CONWAY_WIPE_EFFECT_DELAY (uint8_t)0
+#endif CONWAY_WIPE_EFFECT_DELAY
 
 
 /**
@@ -299,20 +307,20 @@ void Conway::_randomize() {
     /**
      * Small Exploder
      */
-    // i_col = i_row = 3;
-    // if (width == height) {
-    //     i_col = width / 2;
-    //     i_row = height / 2;
-    // }
-    // board->setAlive(i_col    , i_row - 1);
-    // board->setAlive(i_col - 1, i_row    );
-    // board->setAlive(i_col    , i_row    );
-    // board->setAlive(i_col + 1, i_row    );
-    // board->setAlive(i_col - 1, i_row + 1);
-    // board->setAlive(i_col + 1, i_row + 1);
-    // board->setAlive(i_col    , i_row + 2);
-    // any_cells_alive = true;
-    // return;
+    i_col = i_row = 3;
+    if (width == height) {
+        i_col = width / 2;
+        i_row = height / 2;
+    }
+    board->setAlive(i_col    , i_row - 1);
+    board->setAlive(i_col - 1, i_row    );
+    board->setAlive(i_col    , i_row    );
+    board->setAlive(i_col + 1, i_row    );
+    board->setAlive(i_col - 1, i_row + 1);
+    board->setAlive(i_col + 1, i_row + 1);
+    board->setAlive(i_col    , i_row + 2);
+    any_cells_alive = true;
+    return;
 
 
     /**
@@ -399,6 +407,8 @@ void Conway::_drawCell(uint8_t x, uint8_t y) {
         if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
             led_matrix->drawPixel(x, y, colors[CELL_STATE_WIPE]);
             led_matrix->show();
+
+            delay(CONWAY_WIPE_EFFECT_DELAY);
         }
         led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
         if(!CONWAY_WIPE_EFFECT_DRAW_MARKER) led_matrix->show();
@@ -514,14 +524,17 @@ void Conway::draw() {
     }
 
     #if (CONWAY_DRAW_SPIRAL)
-        spiral_spins = width / 2;
+        spiral_spins = (width / 2) + 1;
         spiral_width = width;
         spiral_height = width;
 
+        i_col = 0;
+        i_row = 0;
+
         for(uint8_t i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
 
-            for(i_col = width - spiral_width; i_col < spiral_width; i_col++) {
-                _drawCell(i_col, i_row);
+            for(i_col = max(width - spiral_width - 1, 0); i_col < spiral_width; i_col++) {
+                if(i_spiral_spin != 0) _drawCell(i_col, i_row);
 
                 if(i_col == spiral_width - 1) {
                     for(i_row = height - spiral_height; i_row < spiral_height; i_row++) {
@@ -532,17 +545,17 @@ void Conway::draw() {
 
             i_row--;
 
-            for(; i_col > width - spiral_width; i_col--) {
+            for(--i_col; i_col > width - spiral_width; i_col--) {
                 _drawCell(i_col, i_row);
             }
 
 
-            for(; i_row > height - spiral_height; i_row--){
+            for(i_row; i_row > height - spiral_height; i_row--){
                 _drawCell(i_col, i_row);
             }
 
-            spiral_height--;
             spiral_width--;
+            spiral_height--;
         }
 
         led_matrix->show();
