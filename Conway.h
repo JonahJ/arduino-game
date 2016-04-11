@@ -48,7 +48,7 @@
  * Draw board spiral style. Assumes board is equal in width and height
  */
 #ifndef CONWAY_DRAW_SPIRAL
-    #define CONWAY_DRAW_SPIRAL true
+    #define CONWAY_DRAW_SPIRAL false
 #endif CONWAY_DRAW_SPIRAL
 
 /**
@@ -71,7 +71,7 @@
  * Redraws board one cell at a time. This will make the effect quite slow.
  */
 #ifndef CONWAY_WIPE_EFFECT_PER_CELL
-    #define CONWAY_WIPE_EFFECT_PER_CELL true
+    #define CONWAY_WIPE_EFFECT_PER_CELL false
 #endif CONWAY_WIPE_EFFECT_PER_CELL
 
 /**
@@ -160,11 +160,18 @@ private:
         uint8_t spiral_height;
     #endif
 
+    void _initColors();
     void _print(bool current);
+
+    long num_skip;
+    uint8_t max_width_height;
+
     void _randomize();
     void _assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y);
     void _assignCurrentDensity();
     void _drawCell(uint8_t x, uint8_t y);
+
+    void _newRound();
 
 public:
     Conway(
@@ -222,6 +229,33 @@ Conway::Conway(
     colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
     colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 0, 0);
     colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 0);
+}
+
+void Conway::_initColors() {
+
+    delete colors;
+
+    colors = new uint16_t [CELL_STATE_MAX];
+
+    randomSeed(analogRead(0));
+    randomSeed(analogRead(random(0, 5)));
+
+    num_skip = random(0, 3);
+
+    colors[CELL_STATE_DEAD]         = led_matrix->Color(0, 0, 0);
+    colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 255, 255);
+    colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 0);
+
+    if(num_skip == 0) {
+        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
+        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 0, 0);
+    } else if (num_skip == 1) {
+        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(0, 200, 50);
+        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 255, 0);
+    } else if (num_skip == 2) {
+        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(50, 0, 200);
+        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 0, 255);
+    }
 }
 
 void Conway::_print(bool current = true) {
@@ -308,20 +342,20 @@ void Conway::_randomize() {
     /**
      * Small Exploder
      */
-    i_col = i_row = 3;
-    if (width == height) {
-        i_col = width / 2;
-        i_row = height / 2;
-    }
-    board->setAlive(i_col    , i_row - 1);
-    board->setAlive(i_col - 1, i_row    );
-    board->setAlive(i_col    , i_row    );
-    board->setAlive(i_col + 1, i_row    );
-    board->setAlive(i_col - 1, i_row + 1);
-    board->setAlive(i_col + 1, i_row + 1);
-    board->setAlive(i_col    , i_row + 2);
-    any_cells_alive = true;
-    return;
+    // i_col = i_row = 3;
+    // if (width == height) {
+    //     i_col = width / 2;
+    //     i_row = height / 2;
+    // }
+    // board->setAlive(i_col    , i_row - 1);
+    // board->setAlive(i_col - 1, i_row    );
+    // board->setAlive(i_col    , i_row    );
+    // board->setAlive(i_col + 1, i_row    );
+    // board->setAlive(i_col - 1, i_row + 1);
+    // board->setAlive(i_col + 1, i_row + 1);
+    // board->setAlive(i_col    , i_row + 2);
+    // any_cells_alive = true;
+    // return;
 
 
     /**
@@ -330,9 +364,8 @@ void Conway::_randomize() {
     randomSeed(analogRead(0));
     randomSeed(analogRead(random(0, 5)));
 
-    long num_random_seeds = random(0, width * height);
-    long num_skip = random(0, 1);
-    uint8_t max_width_height = max(width, height);
+    num_skip = random(0, 1);
+    max_width_height = max(width, height);
 
     for(i_col = 0; i_col < width; i_col++) {
         randomSeed(analogRead(random(0, 5)));
@@ -403,6 +436,12 @@ void Conway::_assignCurrentDensity() {
     }
 }
 
+void Conway::_newRound() {
+    _randomize();
+    _assignCurrentDensity();
+    _initColors();
+}
+
 void Conway::_drawCell(uint8_t x, uint8_t y) {
     if(CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL) {
         if(CONWAY_WIPE_EFFECT_DRAW_MARKER) {
@@ -424,8 +463,7 @@ void Conway::init() {
     led_matrix->fillScreen(colors[CELL_STATE_DEAD]);
     led_matrix->show();
 
-    _randomize();
-    _assignCurrentDensity();
+    _newRound();
 }
 
 void Conway::update() {
@@ -435,8 +473,7 @@ void Conway::update() {
      */
     if(!any_cells_alive) {
         if(CONWAY_DEBUG) Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
-        _randomize();
-        _assignCurrentDensity();
+        _newRound();
         return;
     }
 
@@ -488,8 +525,7 @@ void Conway::update() {
 
         if(!board_different) {
             Serial.println("Board Stuck in same state");
-            _randomize();
-            _assignCurrentDensity();
+            _newRound();
             return;
         }
     }
