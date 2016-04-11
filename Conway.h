@@ -106,7 +106,7 @@
 #endif /* CELL_STATE_WIPE */
 
 #ifndef CELL_STATE_MAX
-    #define CELL_STATE_MAX CELL_STATE_WIPE
+    #define CELL_STATE_MAX CELL_STATE_ALIVE_HIGH
 #endif /* CELL_STATE_MAX */
 
 
