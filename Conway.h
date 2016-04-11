@@ -155,6 +155,7 @@ private:
 
     #if (CONWAY_DRAW_SPIRAL)
         uint8_t spiral_spins;
+        uint8_t i_spiral_spin;
         uint8_t spiral_width;
         uint8_t spiral_height;
     #endif
@@ -420,7 +421,7 @@ void Conway::_drawCell(uint8_t x, uint8_t y) {
 void Conway::init() {
     led_matrix->begin();
     led_matrix->setBrightness(BRIGHTNESS);
-    led_matrix->fillScreen(led_matrix->Color(0, 0, 0));
+    led_matrix->fillScreen(colors[CELL_STATE_DEAD]);
     led_matrix->show();
 
     _randomize();
@@ -526,12 +527,12 @@ void Conway::draw() {
     #if (CONWAY_DRAW_SPIRAL)
         spiral_spins = (width / 2) + 1;
         spiral_width = width;
-        spiral_height = width;
+        spiral_height = height;
 
         i_col = 0;
         i_row = 0;
 
-        for(uint8_t i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
+        for(i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
 
             for(i_col = max(width - spiral_width - 1, 0); i_col < spiral_width; i_col++) {
                 if(i_spiral_spin != 0) _drawCell(i_col, i_row);
@@ -544,13 +545,13 @@ void Conway::draw() {
             }
 
             i_row--;
+            i_col--;
 
-            for(--i_col; i_col > width - spiral_width; i_col--) {
+            for(; i_col > width - spiral_width; i_col--) {
                 _drawCell(i_col, i_row);
             }
 
-
-            for(i_row; i_row > height - spiral_height; i_row--){
+            for(; i_row > height - spiral_height; i_row--){
                 _drawCell(i_col, i_row);
             }
 

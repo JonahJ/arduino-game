@@ -1,5 +1,5 @@
 #ifndef SPEED
-  #define SPEED 50
+  #define SPEED 500
 #endif /* SPEED */
 
 #include "Conway.h"
