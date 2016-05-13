@@ -49,14 +49,14 @@
  */
 #ifndef CONWAY_DRAW_SPIRAL
     #define CONWAY_DRAW_SPIRAL false
-#endif CONWAY_DRAW_SPIRAL
+#endif CONWAY_DRAW_SPIRAL /* CONWAY_DRAW_SPIRAL */
 
 /**
  * Draw board one row at a time.
  */
 #ifndef CONWAY_WIPE_EFFECT
     #define CONWAY_WIPE_EFFECT true
-#endif CONWAY_WIPE_EFFECT
+#endif CONWAY_WIPE_EFFECT /* CONWAY_WIPE_EFFECT */
 
 /**
  * Additional delay between pixel draws. This is in addition to the delay
@@ -64,7 +64,7 @@
  */
 #ifndef CONWAY_WIPE_EFFECT_DELAY
     #define CONWAY_WIPE_EFFECT_DELAY (uint8_t)0
-#endif CONWAY_WIPE_EFFECT_DELAY
+#endif CONWAY_WIPE_EFFECT_DELAY /* CONWAY_WIPE_EFFECT_DELAY */
 
 
 /**
@@ -72,14 +72,14 @@
  */
 #ifndef CONWAY_WIPE_EFFECT_PER_CELL
     #define CONWAY_WIPE_EFFECT_PER_CELL false
-#endif CONWAY_WIPE_EFFECT_PER_CELL
+#endif CONWAY_WIPE_EFFECT_PER_CELL /* CONWAY_WIPE_EFFECT_PER_CELL */
 
 /**
  * Shows a marker where it is drawing
  */
 #ifndef CONWAY_WIPE_EFFECT_DRAW_MARKER
     #define CONWAY_WIPE_EFFECT_DRAW_MARKER true
-#endif CONWAY_WIPE_EFFECT_DRAW_MARKER
+#endif CONWAY_WIPE_EFFECT_DRAW_MARKER /* CONWAY_WIPE_EFFECT_DRAW_MARKER */
 
 /*******************************************************************************
  *                                Cell States                                  *
@@ -127,6 +127,12 @@
 // uint8_t i_row = 0;
 
 #include "Board.h"
+
+
+/*******************************************************************************
+ *                                   Conway                                    *
+ *******************************************************************************/
+
 
 class Conway {
 private:
