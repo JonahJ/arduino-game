@@ -17,7 +17,16 @@
  * How many cells are to be stored in a single 8-bites, i.e. 1 byte. The more
  * stored together will decrease memory usage and allow the CPU to run quicker
  * due to less context switching. The lower this number goes the more
- * information that we can store per cell.
+ * information that we can store per cell, ie colors.
+ *
+ *              --------------------------------------------------
+ *              | Cells Per Byte   |   Number of Possible States |
+ *              --------------------------------------------------
+ *              |        8         |           2                 |
+ *              |        4         |           4                 |
+ *              |        2         |           16                |
+ *              |        1         |           256               |
+ *              --------------------------------------------------
  */
 #ifndef CELLS_PER_BYTE
     #define CELLS_PER_BYTE (uint8_t)4
@@ -87,7 +96,7 @@ Board::Board(uint8_t _width, uint8_t _height) {
 
     for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
         board[i_col_count] = new uint8_t [height];
-        for(i_row = 0; i_row < height; i_row++) {
+        for (i_row = 0; i_row < height; i_row++) {
             board[i_col_count][i_row] = NULL;
             board[i_col_count][i_row] = CELL_STATE_DEAD;
         }
@@ -95,9 +104,9 @@ Board::Board(uint8_t _width, uint8_t _height) {
 
     // for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
     //     for (i_col = 0; i_col < width; i_col++) {
-    //         for(i_row = 0; i_row < height; i_row++) {
+    //         for (i_row = 0; i_row < height; i_row++) {
     //             // board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
-    //             if(i_col_count == 0 && i_col == 1 && i_row == 1) {
+    //             if (i_col_count == 0 && i_col == 1 && i_row == 1) {
     //                 // board[i_col_count][i_row] = 3;
     //                 board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
     //             }
@@ -120,8 +129,8 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
         cell_state = (cell_state | (i_cell_col_value << i_cell_col));
     }
 
-    if(BOARD_DEBUG) {
-        if(cell_state != CELL_STATE_DEAD){
+    if (BOARD_DEBUG) {
+        if (cell_state != CELL_STATE_DEAD) {
             Serial.println("--------------");
             Serial.println("( " + String(x) + ", " + String(y) + " ) -> " + String(cell_state));
             Serial.println("G: " + String(i_col_count));
@@ -141,9 +150,9 @@ void Board::setState(uint8_t x, uint8_t y, uint8_t state) {
 
     cell_state = CELL_STATE_DEAD;
 
-    if(state > CELL_STATE_ALIVE) /* Avoid taking pow */
-        if(state > pow(2, (CELL_WIDTH)) - 1) {
-            if(BOARD_DEBUG) Serial.println("Warning, state is too high for CELL_WIDTH. Setting to max.");
+    if (state > CELL_STATE_ALIVE) /* Avoid taking pow */
+        if (state > pow(2, (CELL_WIDTH)) - 1) {
+            if (BOARD_DEBUG) Serial.println("Warning, state is too high for CELL_WIDTH. Setting to max.");
             state = pow(2, (CELL_WIDTH)) - 1;
         }
 
@@ -166,14 +175,14 @@ void Board::setDead(uint8_t x, uint8_t y) {
 
 void Board::reset() {
     for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-        for(i_row = 0; i_row < height; i_row++) {
+        for (i_row = 0; i_row < height; i_row++) {
             board[i_col_count][i_row] = NULL;
         }
     }
 
     for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
         for (i_col = 0; i_col < width; i_col++) {
-            for(i_row = 0; i_row < height; i_row++) {
+            for (i_row = 0; i_row < height; i_row++) {
                 board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_DEAD << i_col));
             }
         }
@@ -185,8 +194,8 @@ void Board::copyBoard(Board * other_board) {
      * Requires redeclaration of i_col and i_row because this function uses
      * internal functions
      */
-    for(uint8_t i_col = 0; i_col < width; i_col++) {
-        for(uint8_t i_row = 0; i_row < height; i_row++) {
+    for (uint8_t i_col = 0; i_col < width; i_col++) {
+        for (uint8_t i_row = 0; i_row < height; i_row++) {
             setState(i_col, i_row, other_board->getState(i_col, i_row));
         }
     }
