@@ -198,7 +198,6 @@ Conway::Conway(
     uint8_t num_boards_y,
     uint8_t pin
 ) {
-
     led_matrix = new Adafruit_NeoMatrix(
         num_pixels_width,
         num_pixels_height,
@@ -302,15 +301,12 @@ void Conway::_print(bool current = true) {
 
     for (i_row = 0; i_row < height; i_row++) {
         if (height >= 10) {
-            if (i_row < 10) {
-                Serial.print(" ");
-            }
+            if (i_row < 10) Serial.print(" ");
         }
         Serial.print(i_row);
         Serial.print(" | ");
 
         for (i_col = 0; i_col < width; i_col++) {
-
             if (i_col > 0) Serial.print("  ");
 
             if (i_col >= 10) Serial.print(" ");
@@ -430,11 +426,11 @@ void Conway::_assignCurrentDensity() {
      */
     if (!CONWAY_ASSIGN_DENSITY) return;
 
+    /**
+     * Update state
+     */
     for (i_col = 0; i_col < width; i_col++) {
         for (i_row = 0; i_row < height; i_row++) {
-            /**
-             * Update state
-             */
             if (board->getState(i_col, i_row) >= CELL_STATE_ALIVE) {
                 _assignNumberCellsActiveSurrounding(i_col, i_row);
                 board->setState(i_col, i_row, num_cells_active_surrounding + CELL_STATE_ALIVE_LOW);
@@ -457,7 +453,9 @@ void Conway::_drawCell(uint8_t x, uint8_t y) {
 
             if (CONWAY_WIPE_EFFECT_DELAY > 0) delay(CONWAY_WIPE_EFFECT_DELAY);
         }
+
         led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
+
         if (!CONWAY_WIPE_EFFECT_DRAW_MARKER) led_matrix->show();
     } else {
         led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
@@ -560,9 +558,7 @@ void Conway::draw() {
                     led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_DEAD]);
                 }
             }
-        } else {
-            led_matrix->clear();
-        }
+        } else led_matrix->clear();
 
         led_matrix->show();
     }
@@ -576,7 +572,6 @@ void Conway::draw() {
         i_row = 0;
 
         for (i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
-
             for (i_col = max(width - spiral_width - 1, 0); i_col < spiral_width; i_col++) {
                 if (i_spiral_spin != 0) _drawCell(i_col, i_row);
 

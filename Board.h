@@ -150,11 +150,12 @@ void Board::setState(uint8_t x, uint8_t y, uint8_t state) {
 
     cell_state = CELL_STATE_DEAD;
 
-    if (state > CELL_STATE_ALIVE) /* Avoid taking pow */
+    if (state > CELL_STATE_ALIVE) { /* Avoid taking pow */
         if (state > pow(2, (CELL_WIDTH)) - 1) {
             if (BOARD_DEBUG) Serial.println("Warning, state is too high for CELL_WIDTH. Setting to max.");
             state = pow(2, (CELL_WIDTH)) - 1;
         }
+    }
 
     for (i_cell_col = 0; i_cell_col < CELL_WIDTH; i_cell_col++) {
         cell_state = (state >> i_cell_col) & 1;
