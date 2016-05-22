@@ -57,7 +57,7 @@
  *******************************************************************************/
 
 class Board {
-private:
+protected:
     uint8_t ** board;
 
     uint8_t width;
@@ -77,6 +77,7 @@ public:
     Board(uint8_t _width, uint8_t _height);
 
     uint8_t getState(uint8_t x, uint8_t y);
+    void print(bool verbose);
 
     void setState(uint8_t x, uint8_t y, uint8_t state);
     void setAlive(uint8_t x, uint8_t y);
@@ -142,6 +143,59 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
     }
 
     return cell_state;
+}
+
+void Board::print(bool verbose) {
+
+    if (verbose) {
+        Serial.println("Printing Board");
+        Serial.println("Width " + String(width));
+        Serial.println("Height " + String(height));
+        // Serial.println("Any Active: " + String(any_cells_alive));
+    }
+
+    for (i_col = 0; i_col < width; i_col++) {
+        if (i_col == 0) {
+            Serial.print("  ");
+
+            if (height >= 10) Serial.print(" ");
+        }
+
+        Serial.print("  ");
+        Serial.print(i_col);
+    }
+    Serial.print("\n");
+
+    for (i_col = 0; i_col < width; i_col++) {
+        if (i_col == 0) {
+            Serial.print("  ");
+
+            if (height >= 10) Serial.print(" ");
+        }
+
+        Serial.print("---");
+
+        if (i_col >= 10) Serial.print("-");
+    }
+    Serial.print("\n");
+
+    for (uint8_t i_row = 0; i_row < height; i_row++) {
+        if (height >= 10) {
+            if (i_row < 10) Serial.print(" ");
+        }
+        Serial.print(i_row);
+        Serial.print(" | ");
+
+        for (uint8_t i_col = 0; i_col < width; i_col++) {
+            if (i_col > 0) Serial.print("  ");
+
+            if (i_col >= 10) Serial.print(" ");
+
+            Serial.print(getState(i_col, i_row));
+        }
+        Serial.print("\n");
+    }
+
 }
 
 void Board::setState(uint8_t x, uint8_t y, uint8_t state) {
