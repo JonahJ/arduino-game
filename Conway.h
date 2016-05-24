@@ -146,7 +146,7 @@ private:
     uint8_t height;
 
     bool any_cells_alive;
-    bool board_different;
+    bool board_same;
 
     Adafruit_NeoMatrix * led_matrix;
 
@@ -275,11 +275,16 @@ void Conway::_randomize() {
 
     board->reset();
 
-    board->setAlive(1, 1);
-    board->setAlive(1, 2);
-    board->setAlive(1, 3);
-    any_cells_alive = true;
-    return;
+
+    // board->setAlive(1, 0);
+    // board->setAlive(1, 1);
+    // board->setAlive(1, 2);
+
+    // board->setAlive(1, 0);
+    // board->setAlive(2, 0);
+    // board->setAlive(3, 0);
+    // any_cells_alive = true;
+    // return;
 
 
     /**
@@ -294,13 +299,13 @@ void Conway::_randomize() {
     /**
      * Glider
      */
-    board->setAlive(1, 0);
-    board->setAlive(2, 1);
-    board->setAlive(0, 2);
-    board->setAlive(1, 2);
-    board->setAlive(2, 2);
-    any_cells_alive = true;
-    return;
+    // board->setAlive(1, 0);
+    // board->setAlive(2, 1);
+    // board->setAlive(0, 2);
+    // board->setAlive(1, 2);
+    // board->setAlive(2, 2);
+    // any_cells_alive = true;
+    // return;
 
 
     /**
@@ -448,14 +453,14 @@ void Conway::update() {
      */
     board_next->reset();
     // any_cells_alive = false;
-    board_different = true;
+    board_same = true;
 
 
     /**
      * Compute what is alive in the next round
      */
-    for (i_col = 0; i_col < width; i_col++) {
-        for (i_row = 0; i_row < height; i_row++) {
+    for (i_row = 0; i_row < height; i_row++) {
+        for (i_col = 0; i_col < width; i_col++) {
             _assignNumberCellsActiveSurrounding(i_col, i_row);
 
             /**
@@ -466,8 +471,7 @@ void Conway::update() {
                     if (CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_cells_active_surrounding);
                     else board_next->setAlive(i_col, i_row);
 
-
-                    Serial.println("Alive: " + String(i_col) + " , " + String(i_row));
+                    // Serial.println("Alive: " + String(i_col) + " , " + String(i_row));
 
                     any_cells_alive = true;
                 }
@@ -476,42 +480,33 @@ void Conway::update() {
                 if (CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_cells_active_surrounding);
                 else board_next->setAlive(i_col, i_row);
 
-                Serial.println("Alive: " + String(i_col) + " , " + String(i_row));
+                // Serial.println("Alive: " + String(i_col) + " , " + String(i_row));
 
                 any_cells_alive = true;
             }
+
         }
-
-
 
         /**
          * Assign top row of board_next to board. Then shift board next's rows.
          * Check to see if top row is the same. Clear top, assign bottom to top,
          * then clear bottom.
          */
-        if(i_row > 0) {
-
-            /**
-             * No longer need row - 1
-             */
-            board_next->print(false);
-            board_different &= board_next->copyRow(board);
-            board_next->finishRow();
-        }
+        if(i_row > 0) board_same &= board_next->copyRow(board);
     }
 
-    board_different &= board_next->copyRow(board);
-    board_next->finishRow();
+    board_same &= board_next->copyRow(board);
+    board_same &= board_next->copyRow(board);
 
-    Serial.println("Same: " + String(board_different));
+    // Serial.println("Same: " + String(board_same));
 
-    // if (CONWAY_CHECK_HISTORY) {
-    //     if (!board_different) {
-    //         Serial.println("Board Stuck in same state");
-    //         _newRound();
-    //         return;
-    //     }
-    // }
+    if (CONWAY_CHECK_HISTORY) {
+        if (board_same) {
+            Serial.println("Board Stuck in same state");
+            _newRound();
+            return;
+        }
+    }
 
     return;
 }
@@ -522,7 +517,7 @@ void Conway::draw() {
         // Serial.println("\n\n\n\n\n\n");
         // _print();
 
-        board->print(false);
+        // board->print(false);
     }
 
 

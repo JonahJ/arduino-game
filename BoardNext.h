@@ -65,9 +65,52 @@ uint8_t BoardNext::getState(uint8_t x, uint8_t y) {
     return Board::getState(x, i_row_in_memory);
 }
 
-void BoardNext::print(bool verbose) {
+void BoardNext::print(bool verbose = false) {
     Serial.println("Current Top Row: " + String(top_row_i_row));
-    Board::print(verbose);
+
+
+
+    for (i_col = 0; i_col < width; i_col++) {
+        if (i_col == 0) {
+            Serial.print("  ");
+
+            if (height >= 10) Serial.print(" ");
+        }
+
+        Serial.print("  ");
+        Serial.print(i_col);
+    }
+    Serial.print("\n");
+
+    for (i_col = 0; i_col < width; i_col++) {
+        if (i_col == 0) {
+            Serial.print("  ");
+
+            if (height >= 10) Serial.print(" ");
+        }
+
+        Serial.print("---");
+
+        if (i_col >= 10) Serial.print("-");
+    }
+    Serial.print("\n");
+
+    for (uint8_t i_row = top_row_i_row; i_row < height + top_row_i_row; i_row++) {
+        if (height >= 10) {
+            if (i_row < 10) Serial.print(" ");
+        }
+        Serial.print(i_row + top_row_i_row);
+        Serial.print(" | ");
+
+        for (uint8_t i_col = 0; i_col < width; i_col++) {
+            if (i_col > 0) Serial.print("  ");
+
+            if (i_col >= 10) Serial.print(" ");
+
+            Serial.print(getState(i_col, i_row));
+        }
+        Serial.print("\n");
+    }
 }
 
 void BoardNext::setState(uint8_t x, uint8_t y, uint8_t state) {
@@ -75,13 +118,19 @@ void BoardNext::setState(uint8_t x, uint8_t y, uint8_t state) {
     // Serial.println("y: " + String(y) + " == " + String(top_row_i_row) + " => " + String(y == top_row_i_row));
 
 
+
     i_row_in_memory = y - top_row_i_row;
+
+    // Serial.println("( " + String(x) + ", " + String(y) + ") => (" + String(x) + ", " + String(i_row_in_memory) + " )");
+
 
     Board::setState(x, i_row_in_memory, state);
 }
 
 void BoardNext::setAlive(uint8_t x, uint8_t y) {
     i_row_in_memory = y - top_row_i_row;
+
+    // if(x == 0)
 
     Board::setAlive(x, i_row_in_memory);
 }
@@ -109,41 +158,39 @@ bool BoardNext::copyRow(Board * other_board) {
     rows_same = true;
     // Serial.println("Copying over " + String(top_row_i_row));
 
-    for (uint8_t i_col = 0; i_col < width; i_col++) {
-        // other_board->setState(i_col, top_row_i_row, BoardNext::getState(i_col, top_row_i_row));
+    // print();
 
-
+    for (uint8_t i_index = 0; i_index < other_board->getHeight(); i_index++) {
         // Serial.println("cell " + String(i_col) + " = " + String(Board::getState(i_col, 0)));
 
         /**
          * Check if row is same
          */
-        if (rows_same) rows_same &= (other_board->getState(i_col, top_row_i_row) == Board::getState(i_col, 0));
+        if (rows_same) rows_same &= (other_board->getState(i_index, top_row_i_row) == getState(i_index, top_row_i_row));
 
-
-
-        other_board->setState(i_col, top_row_i_row, Board::getState(i_col, 0));
-
-        // other_board->setState(i_col, top_row_i_row, CELL_STATE_ALIVE);
-
-
+        other_board->setState(i_index, top_row_i_row, getState(i_index, top_row_i_row));
     }
+
+    finishRow();
 
     return rows_same;
 }
 
 void BoardNext::finishRow() {
+    /**
+     * Shift up by 1
+     */
     for (uint8_t i_col = 0; i_col < width; i_col++) {
-        for (uint8_t i_row = 0; i_row < height; i_row++) {
+        for (uint8_t i_row = top_row_i_row; i_row < height + top_row_i_row; i_row++) {
 
-            if (i_row == 0) Board::setState(i_col, 0, Board::getState(i_col, 1));
-            else Board::setState(i_col, i_row, CELL_STATE_DEAD);
-            // if (i_row < height - 1) Board::setState(i_col, i_row, getState(i_col, i_row + 1));
-            // else Board::setState(i_col, i_row, CELL_STATE_DEAD);
+            // setState(i_col, i_row, CELL_STATE_DEAD);
+            // BoardNext::setState(i_col, i_row, CELL_STATE_ALIVE);
+
+            // continue;
+            if (i_row == top_row_i_row) setState(i_col, i_row, getState(i_col, i_row + 1));
+            else setState(i_col, i_row, CELL_STATE_DEAD);
         }
     }
-
-    // Serial.println("Deleting row: " + String(top_row_i_row));
 
     top_row_i_row++;
 }

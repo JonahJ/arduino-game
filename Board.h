@@ -76,6 +76,8 @@ protected:
 public:
     Board(uint8_t _width, uint8_t _height);
 
+    uint8_t getWidth() const;
+    uint8_t getHeight() const;
     uint8_t getState(uint8_t x, uint8_t y);
     void print(bool verbose);
 
@@ -117,6 +119,14 @@ Board::Board(uint8_t _width, uint8_t _height) {
     // }
 }
 
+uint8_t Board::getWidth() const {
+    return width;
+}
+
+uint8_t Board::getHeight() const {
+    return height;
+}
+
 uint8_t Board::getState(uint8_t x, uint8_t y) {
     i_col_count = x / CELLS_PER_BYTE;
     i_col = x % CELLS_PER_BYTE;
@@ -145,7 +155,7 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
     return cell_state;
 }
 
-void Board::print(bool verbose) {
+void Board::print(bool verbose = false) {
 
     if (verbose) {
         Serial.println("Printing Board");
