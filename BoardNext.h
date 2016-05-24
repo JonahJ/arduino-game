@@ -23,6 +23,8 @@
 class BoardNext: public Board {
 private:
     uint8_t top_row_i_row;
+    bool top_row_storing_annex;
+
     uint8_t i_row_in_memory;
     bool rows_same;
 
@@ -140,11 +142,7 @@ void BoardNext::reset() {
  * @return             truth of the rows being the same
  */
 bool BoardNext::copyRow(Board * other_board) {
-
     rows_same = true;
-    // Serial.println("Copying over " + String(top_row_i_row));
-
-    // print();
 
     for (uint8_t i_index = 0; i_index < other_board->getHeight(); i_index++) {
         // Serial.println("cell " + String(i_col) + " = " + String(Board::getState(i_col, 0)));

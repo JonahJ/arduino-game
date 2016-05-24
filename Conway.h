@@ -127,6 +127,7 @@
 
 #include "Board.h"
 #include "BoardNext.h"
+#include "BoardAnnex.h"
 
 
 /*******************************************************************************
@@ -136,7 +137,7 @@
 class Conway {
 private:
     Board * board;
-    BoardNext * board_next;
+    BoardAnnex * board_next;
 
     uint8_t * colors;
 
@@ -221,7 +222,7 @@ Conway::Conway(
 
     any_cells_alive = false;
     board = new Board(width, height);
-    board_next = new BoardNext(width, 2);
+    board_next = new BoardAnnex(width, 2);
 
     /**
      * Init Colors
@@ -493,9 +494,10 @@ void Conway::update() {
          * then clear bottom.
          */
         if(i_row > 0) board_same &= board_next->copyRow(board);
+
+        board_next->finishRow();
     }
 
-    board_same &= board_next->copyRow(board);
     board_same &= board_next->copyRow(board);
 
     // Serial.println("Same: " + String(board_same));
