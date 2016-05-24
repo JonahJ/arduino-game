@@ -50,25 +50,16 @@ BoardNext::BoardNext(uint8_t _width, uint8_t _height): Board(_width, _height) {
 }
 
 uint8_t BoardNext::getState(uint8_t x, uint8_t y) {
-
-
-
-    // if(y == top_row_i_row) {
-    //     Serial.println("FROM TOP! " + String(x) + " = " + String(Board::getState(x, 0)));
-    // } else {
-    //     Serial.println("FROM Bottom! " + String(x) + " = " + String(Board::getState(x, 1)));
-
-    // }
-
     i_row_in_memory = y - top_row_i_row;
 
     return Board::getState(x, i_row_in_memory);
 }
 
 void BoardNext::print(bool verbose = false) {
-    Serial.println("Current Top Row: " + String(top_row_i_row));
 
-
+    if (verbose) {
+        Serial.println("Current Top Row: " + String(top_row_i_row));
+    }
 
     for (i_col = 0; i_col < width; i_col++) {
         if (i_col == 0) {
@@ -95,11 +86,11 @@ void BoardNext::print(bool verbose = false) {
     }
     Serial.print("\n");
 
-    for (uint8_t i_row = top_row_i_row; i_row < height + top_row_i_row; i_row++) {
+    for (i_col_annex = top_row_i_row; i_col_annex < height + top_row_i_row; i_col_annex++) {
         if (height >= 10) {
-            if (i_row < 10) Serial.print(" ");
+            if (i_col_annex < 10) Serial.print(" ");
         }
-        Serial.print(i_row + top_row_i_row);
+        Serial.print(i_col_annex + top_row_i_row);
         Serial.print(" | ");
 
         for (uint8_t i_col = 0; i_col < width; i_col++) {
@@ -107,7 +98,7 @@ void BoardNext::print(bool verbose = false) {
 
             if (i_col >= 10) Serial.print(" ");
 
-            Serial.print(getState(i_col, i_row));
+            Serial.print(getState(i_col, i_col_annex));
         }
         Serial.print("\n");
     }
@@ -117,20 +108,15 @@ void BoardNext::setState(uint8_t x, uint8_t y, uint8_t state) {
 
     // Serial.println("y: " + String(y) + " == " + String(top_row_i_row) + " => " + String(y == top_row_i_row));
 
-
-
     i_row_in_memory = y - top_row_i_row;
 
     // Serial.println("( " + String(x) + ", " + String(y) + ") => (" + String(x) + ", " + String(i_row_in_memory) + " )");
-
 
     Board::setState(x, i_row_in_memory, state);
 }
 
 void BoardNext::setAlive(uint8_t x, uint8_t y) {
     i_row_in_memory = y - top_row_i_row;
-
-    // if(x == 0)
 
     Board::setAlive(x, i_row_in_memory);
 }
@@ -180,16 +166,9 @@ void BoardNext::finishRow() {
     /**
      * Shift up by 1
      */
-    for (uint8_t i_col = 0; i_col < width; i_col++) {
-        for (uint8_t i_row = top_row_i_row; i_row < height + top_row_i_row; i_row++) {
-
-            // setState(i_col, i_row, CELL_STATE_DEAD);
-            // BoardNext::setState(i_col, i_row, CELL_STATE_ALIVE);
-
-            // continue;
-            if (i_row == top_row_i_row) setState(i_col, i_row, getState(i_col, i_row + 1));
-            else setState(i_col, i_row, CELL_STATE_DEAD);
-        }
+    for (i_col_annex = 0; i_col_annex < width; i_col_annex++) {
+        setState(i_col_annex, top_row_i_row, getState(i_col_annex, top_row_i_row + 1));
+        setState(i_col_annex, top_row_i_row + 1, CELL_STATE_DEAD);
     }
 
     top_row_i_row++;

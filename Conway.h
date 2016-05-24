@@ -10,7 +10,7 @@
  * current state. This may slow down the board speed
  */
 #ifndef CONWAY_DEBUG
-    #define CONWAY_DEBUG true
+    #define CONWAY_DEBUG false
 #endif /* CONWAY_DEBUG */
 
 /**
@@ -517,7 +517,7 @@ void Conway::draw() {
         // Serial.println("\n\n\n\n\n\n");
         // _print();
 
-        // board->print(false);
+        board->print(false);
     }
 
 

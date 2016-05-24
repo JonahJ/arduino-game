@@ -68,6 +68,9 @@ protected:
     uint8_t i_col;
     uint8_t i_row;
 
+    uint8_t i_col_annex;
+    uint8_t i_row_annex;
+
     uint8_t cell_col;
     uint8_t i_cell_col;
     uint8_t i_cell_col_value;
@@ -189,11 +192,11 @@ void Board::print(bool verbose = false) {
     }
     Serial.print("\n");
 
-    for (uint8_t i_row = 0; i_row < height; i_row++) {
+    for (i_row_annex = 0; i_row_annex < height; i_row_annex++) {
         if (height >= 10) {
-            if (i_row < 10) Serial.print(" ");
+            if (i_row_annex < 10) Serial.print(" ");
         }
-        Serial.print(i_row);
+        Serial.print(i_row_annex);
         Serial.print(" | ");
 
         for (uint8_t i_col = 0; i_col < width; i_col++) {
@@ -201,7 +204,7 @@ void Board::print(bool verbose = false) {
 
             if (i_col >= 10) Serial.print(" ");
 
-            Serial.print(getState(i_col, i_row));
+            Serial.print(getState(i_col, i_row_annex));
         }
         Serial.print("\n");
     }
@@ -260,9 +263,9 @@ void Board::copyBoard(Board * other_board) {
      * Requires redeclaration of i_col and i_row because this function uses
      * internal functions
      */
-    for (uint8_t i_col = 0; i_col < width; i_col++) {
-        for (uint8_t i_row = 0; i_row < height; i_row++) {
-            setState(i_col, i_row, other_board->getState(i_col, i_row));
+    for (i_col_annex = 0; i_col_annex < width; i_col_annex++) {
+        for (i_row_annex = 0; i_row_annex < height; i_row_annex++) {
+            setState(i_col_annex, i_row_annex, other_board->getState(i_col_annex, i_row_annex));
         }
     }
 }
