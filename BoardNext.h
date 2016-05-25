@@ -4,22 +4,14 @@
 #include "Board.h"
 
 /*******************************************************************************
- *                                Cell States                                  *
- *******************************************************************************/
-
-#ifndef CELL_STATE_DEAD
-    #define CELL_STATE_DEAD 0
-#endif /* CELL_STATE_DEAD */
-
-#ifndef CELL_STATE_ALIVE
-    #define CELL_STATE_ALIVE 1
-#endif /* CELL_STATE_ALIVE */
-
-/*******************************************************************************
  *                                 Board Next                                  *
  *******************************************************************************/
 
-
+/**
+ * Uses a stack of height = 2 to represent a full checking Board. Top row
+ * represents stored final state of row back by 1, row 2 represents the temp
+ * row to store current row's next state.
+ */
 class BoardNext: public Board {
 private:
     uint8_t top_row_i_row;
@@ -58,16 +50,15 @@ uint8_t BoardNext::getState(uint8_t x, uint8_t y) {
 }
 
 void BoardNext::print(bool verbose = false) {
-
     if (verbose) {
         Serial.println("Current Top Row: " + String(top_row_i_row));
     }
 
-    for (i_col = 0; i_col < width; i_col++) {
+    for (i_col = 0; i_col < getWidth(); i_col++) {
         if (i_col == 0) {
             Serial.print("  ");
 
-            if (height >= 10) Serial.print(" ");
+            if (getHeight() >= 10) Serial.print(" ");
         }
 
         Serial.print("  ");
@@ -75,11 +66,11 @@ void BoardNext::print(bool verbose = false) {
     }
     Serial.print("\n");
 
-    for (i_col = 0; i_col < width; i_col++) {
+    for (i_col = 0; i_col < getWidth(); i_col++) {
         if (i_col == 0) {
             Serial.print("  ");
 
-            if (height >= 10) Serial.print(" ");
+            if (getHeight() >= 10) Serial.print(" ");
         }
 
         Serial.print("---");
@@ -88,28 +79,27 @@ void BoardNext::print(bool verbose = false) {
     }
     Serial.print("\n");
 
-    for (i_col_annex = top_row_i_row; i_col_annex < height + top_row_i_row; i_col_annex++) {
-        if (height >= 10) {
+    for (i_col_annex = top_row_i_row; i_col_annex < getHeight() + top_row_i_row; i_col_annex++) {
+        if (getHeight() >= 10) {
             if (i_col_annex < 10) Serial.print(" ");
         }
         Serial.print(i_col_annex + top_row_i_row);
         Serial.print(" | ");
 
-        for (uint8_t i_col = 0; i_col < width; i_col++) {
+        for (uint8_t i_col = 0; i_col < getWidth(); i_col++) {
             if (i_col > 0) Serial.print("  ");
 
             if (i_col >= 10) Serial.print(" ");
 
-            Serial.print(getState(i_col, i_col_annex));
+            if (BOARD_PRINT_CELL_STATE_DEAD) Serial.print(getState(i_col, i_col_annex));
+            else if (getState(i_col, i_col_annex) == CELL_STATE_DEAD) Serial.print(" ");
+            else Serial.print(getState(i_col, i_col_annex));
         }
         Serial.print("\n");
     }
 }
 
 void BoardNext::setState(uint8_t x, uint8_t y, uint8_t state) {
-
-    // Serial.println("y: " + String(y) + " == " + String(top_row_i_row) + " => " + String(y == top_row_i_row));
-
     i_row_in_memory = y - top_row_i_row;
 
     // Serial.println("( " + String(x) + ", " + String(y) + ") => (" + String(x) + ", " + String(i_row_in_memory) + " )");
@@ -162,9 +152,9 @@ bool BoardNext::copyRow(Board * other_board) {
 
 void BoardNext::finishRow() {
     /**
-     * Shift up by 1
+     * Shift memory up by 1. NULL out bottom row
      */
-    for (i_col_annex = 0; i_col_annex < width; i_col_annex++) {
+    for (i_col_annex = 0; i_col_annex < getWidth(); i_col_annex++) {
         setState(i_col_annex, top_row_i_row, getState(i_col_annex, top_row_i_row + 1));
         setState(i_col_annex, top_row_i_row + 1, CELL_STATE_DEAD);
     }

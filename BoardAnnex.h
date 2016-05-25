@@ -4,28 +4,18 @@
 #include "Board.h"
 
 /*******************************************************************************
- *                                Cell States                                  *
- *******************************************************************************/
-
-#ifndef CELL_STATE_DEAD
-    #define CELL_STATE_DEAD 0
-#endif /* CELL_STATE_DEAD */
-
-#ifndef CELL_STATE_ALIVE
-    #define CELL_STATE_ALIVE 1
-#endif /* CELL_STATE_ALIVE */
-
-/*******************************************************************************
  *                                 Board Next                                  *
  *******************************************************************************/
 
-
 class BoardAnnex: public Board {
 private:
-    uint8_t reader_i_row;
-    bool top_row_reader;
+    uint8_t size_wise;
+    bool width_wise;
 
-    bool rows_same;
+    uint8_t reader_i;
+    bool i_writer;
+
+    bool all_i_assigning_same;
 
 public:
     BoardAnnex(uint8_t _width, uint8_t _height);
@@ -42,73 +32,113 @@ public:
     void finishRow();
 };
 
+/**
+ * Init Board Annex
+ *
+ * @param {int} width
+ * @param {int} height
+ */
 BoardAnnex::BoardAnnex(uint8_t _width, uint8_t _height): Board(_width, _height) {
-    reader_i_row = 0;
-    top_row_reader = false;
+    size_wise = max(_width, _height);
+    width_wise = (_height <= _width);
 
-    rows_same = true;
+    reader_i = 0;
+    i_writer = false;
+
+    all_i_assigning_same = true;
 }
 
+/**
+ * Print board and optionally diagnostic info
+ *
+ * @param {Bool} verbose mode for more diagnostic info
+ */
 void BoardAnnex::print(bool verbose = false) {
     if (verbose) {
-        Serial.println("Current Top Row: " + String(reader_i_row));
-        Serial.println("Reader: " + String(top_row_reader));
+        Serial.println("Current Top Index: " + String(reader_i));
+        Serial.println("Reader: " + String(i_writer));
     }
 
     Board::print();
 }
 
+/**
+ * Set (x, i_writer) to state
+ *
+ * @param {int} x
+ * @param {int} y, but we will ignore and use i_writer
+ * @param {int} state state of cell
+ */
 void BoardAnnex::setState(uint8_t x, uint8_t y, uint8_t state) {
-    Board::setState(x, top_row_reader, state);
+    if (width_wise) Board::setState(x, i_writer, state);
+    else Board::setState(i_writer, y, state);
 }
 
+/**
+ * Set (x, i_writer) to alive
+ *
+ * @param {int} x
+ * @param {int} y, but we will ignore and use i_writer
+ */
 void BoardAnnex::setAlive(uint8_t x, uint8_t y) {
-    Board::setAlive(x, top_row_reader);
+    if (width_wise) Board::setAlive(x, i_writer);
+    else Board::setAlive(i_writer, y);
 }
 
+/**
+ * Set (x, i_writer) to dead
+ *
+ * @param {int} x
+ * @param {int} y, but we will ignore and use i_writer
+ */
 void BoardAnnex::setDead(uint8_t x, uint8_t y) {
-    Board::setDead(x, top_row_reader);
+    if (width_wise) Board::setDead(x, i_writer);
+    else Board::setDead(i_writer, y);
 }
 
-
+/**
+ * Resets Board
+ */
 void BoardAnnex::reset() {
-    reader_i_row = 0;
-    top_row_reader = false;
+    reader_i = 0;
+    i_writer = false;
 
     Board::reset();
 }
 
 /**
- * Copies over the row designated by `reader_i_row`. Returns truth of the rows
+ * Copies over the row designated by `reader_i`. Returns truth of the rows
  * being the same
- * @param  other_board Board to copy over to
- * @return             truth of the rows being the same
+ *
+ * @param  {Board} other_board  Board to copy over to
+ * @return {bool}               truth of the rows being the same
  */
 bool BoardAnnex::copyRow(Board * other_board) {
-    rows_same = true;
+    all_i_assigning_same = true;
 
-    for (uint8_t i_index = 0; i_index < other_board->getHeight(); i_index++) {
+    for (i_col_annex = 0; i_col_annex < size_wise; i_col_annex++) {
         /**
          * Check if row is same
          */
-        if (rows_same) rows_same &= (other_board->getState(i_index, reader_i_row) == getState(i_index, !top_row_reader));
+        if (all_i_assigning_same) all_i_assigning_same &= (other_board->getState(i_col_annex, reader_i) == getState(i_col_annex, !i_writer));
 
-        other_board->setState(i_index, reader_i_row, getState(i_index, !top_row_reader));
+        other_board->setState(i_col_annex, reader_i, getState(i_col_annex, !i_writer));
     }
 
-    reader_i_row++;
+    reader_i++;
 
-    return rows_same;
+    return all_i_assigning_same;
 }
 
+/**
+ * Reset reading row to NULL. Then set that row to be writable
+ */
 void BoardAnnex::finishRow() {
-    top_row_reader = !top_row_reader;
+    i_writer = !i_writer;
 
-    /**
-     * Shift up by 1
-     */
-    for (i_col_annex = 0; i_col_annex < width; i_col_annex++) {
-        Board::setState(i_col_annex, top_row_reader, CELL_STATE_DEAD);
+    for (i_col_annex = 0; i_col_annex < size_wise; i_col_annex++) {
+        if (width_wise) Board::setState(i_col_annex, i_writer, CELL_STATE_DEAD);
+        else Board::setState(i_writer, i_col_annex, CELL_STATE_DEAD);
     }
 }
 #endif /* BoardAnnex_h */

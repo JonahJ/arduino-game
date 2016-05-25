@@ -14,6 +14,19 @@
 #endif /* BOARD_DEBUG */
 
 /**
+ * Print state DEAD or not. When false requires two lookups to a given cell, but
+ * prints a blank string to the Serial instead of the CELL_STATE_DEAD state.
+ */
+#ifndef BOARD_PRINT_CELL_STATE_DEAD
+    #define BOARD_PRINT_CELL_STATE_DEAD false
+#endif /* BOARD_PRINT_CELL_STATE_DEAD */
+
+
+/*******************************************************************************
+ *                                 Cell Settings                               *
+ *******************************************************************************/
+
+/**
  * How many cells are to be stored in a single 8-bites, i.e. 1 byte. The more
  * stored together will decrease memory usage and allow the CPU to run quicker
  * due to less context switching. The lower this number goes the more
@@ -40,6 +53,7 @@
     #define CELL_WIDTH (uint8_t)8 / CELLS_PER_BYTE
 #endif /* CELL_WIDTH */
 
+
 /*******************************************************************************
  *                                Cell States                                  *
  *******************************************************************************/
@@ -57,24 +71,25 @@
  *******************************************************************************/
 
 class Board {
-protected:
-    uint8_t ** board;
-
+private:
     uint8_t width;
     uint8_t height;
+    uint8_t ** board;
+
     uint8_t num_columns;
-
     uint8_t i_col_count;
-    uint8_t i_col;
-    uint8_t i_row;
-
-    uint8_t i_col_annex;
-    uint8_t i_row_annex;
 
     uint8_t cell_col;
     uint8_t i_cell_col;
     uint8_t i_cell_col_value;
     uint8_t cell_state;
+
+protected:
+    uint8_t i_col;
+    uint8_t i_row;
+
+    uint8_t i_col_annex;
+    uint8_t i_row_annex;
 
 public:
     Board(uint8_t _width, uint8_t _height);
@@ -93,6 +108,12 @@ public:
     void copyBoard(Board * other_board);
 };
 
+/**
+ * Init Board Annex
+ *
+ * @param {int} width
+ * @param {int} height
+ */
 Board::Board(uint8_t _width, uint8_t _height) {
     width = _width;
     height = _height;
@@ -108,18 +129,6 @@ Board::Board(uint8_t _width, uint8_t _height) {
             board[i_col_count][i_row] = CELL_STATE_DEAD;
         }
     }
-
-    // for (i_col_count = 0; i_col_count < num_columns; i_col_count++) {
-    //     for (i_col = 0; i_col < width; i_col++) {
-    //         for (i_row = 0; i_row < height; i_row++) {
-    //             // board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
-    //             if (i_col_count == 0 && i_col == 1 && i_row == 1) {
-    //                 // board[i_col_count][i_row] = 3;
-    //                 board[i_col_count][i_row] = (board[i_col_count][i_row] | (CELL_STATE_ALIVE << i_col));
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 uint8_t Board::getWidth() const {
@@ -159,7 +168,6 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
 }
 
 void Board::print(bool verbose = false) {
-
     if (verbose) {
         Serial.println("Printing Board");
         Serial.println("Width " + String(width));
@@ -204,7 +212,9 @@ void Board::print(bool verbose = false) {
 
             if (i_col >= 10) Serial.print(" ");
 
-            Serial.print(getState(i_col, i_row_annex));
+            if (BOARD_PRINT_CELL_STATE_DEAD) Serial.print(getState(i_col, i_row_annex));
+            else if (getState(i_col, i_row_annex) == CELL_STATE_DEAD) Serial.print(" ");
+            else Serial.print(getState(i_col, i_row_annex));
         }
         Serial.print("\n");
     }
@@ -259,10 +269,6 @@ void Board::reset() {
 }
 
 void Board::copyBoard(Board * other_board) {
-    /**
-     * Requires redeclaration of i_col and i_row because this function uses
-     * internal functions
-     */
     for (i_col_annex = 0; i_col_annex < width; i_col_annex++) {
         for (i_row_annex = 0; i_row_annex < height; i_row_annex++) {
             setState(i_col_annex, i_row_annex, other_board->getState(i_col_annex, i_row_annex));

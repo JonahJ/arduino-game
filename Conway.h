@@ -10,7 +10,7 @@
  * current state. This may slow down the board speed
  */
 #ifndef CONWAY_DEBUG
-    #define CONWAY_DEBUG false
+    #define CONWAY_DEBUG true
 #endif /* CONWAY_DEBUG */
 
 /**
@@ -45,7 +45,8 @@
 #endif /* CONWAY_ASSIGN_DENSITY */
 
 /**
- * Draw board spiral style. Assumes board is equal in width and height
+ * Draw board spiral style. Assumes board is equal in width and height. Uses
+ * a bit more memory than typical col -> row draw
  */
 #ifndef CONWAY_DRAW_SPIRAL
     #define CONWAY_DRAW_SPIRAL false
@@ -126,7 +127,7 @@
 // uint8_t i_row = 0;
 
 #include "Board.h"
-#include "BoardNext.h"
+// #include "BoardNext.h"
 #include "BoardAnnex.h"
 
 
@@ -138,6 +139,8 @@ class Conway {
 private:
     Board * board;
     BoardAnnex * board_next;
+
+    bool row_wise_annex;
 
     uint8_t * colors;
 
@@ -222,7 +225,12 @@ Conway::Conway(
 
     any_cells_alive = false;
     board = new Board(width, height);
-    board_next = new BoardAnnex(width, 2);
+
+    // row_wise_annex = !(width <= height);
+    // if (row_wise_annex) board_next = new BoardAnnex(2, height);
+    // else
+
+        board_next = new BoardAnnex(width, 2);
 
     /**
      * Init Colors
@@ -231,11 +239,14 @@ Conway::Conway(
     colors[CELL_STATE_DEAD]         = led_matrix->Color(0, 0, 0);
     colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 255, 255);
     colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
-    colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 0, 0);
+    colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 255, 255);
     colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 0);
+
 }
 
 void Conway::_initColors() {
+
+    return;
 
     delete colors;
 
@@ -246,28 +257,27 @@ void Conway::_initColors() {
 
     num_skip = random(0, 3);
 
-    colors[CELL_STATE_DEAD]             = led_matrix->Color(0, 0, 0);
-    colors[CELL_STATE_ALIVE]            = led_matrix->Color(255, 255, 255);
-    colors[CELL_STATE_WIPE]             = led_matrix->Color(255, 255, 0);
-
-        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(0, 0, 255);
-        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 0, 0);
+    colors[CELL_STATE_DEAD]         = led_matrix->Color(0, 0, 0);
+    colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 255, 255);
+    colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
+    colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 200, 0);
+    colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 0);
 
         // return;
 
-    // if (num_skip == 0) {
-    //     colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
-    //     colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 0, 0);
-    // } else if (num_skip == 1) {
-    //     colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(0, 200, 50);
-    //     colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 255, 0);
-    // } else if (num_skip == 2) {
-    //     colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(50, 0, 200);
-    //     colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 0, 255);
-    // } else {
-    //     colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
-    //     colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 0, 0);
-    // }
+    if (num_skip == 0) {
+        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
+        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 200, 0);
+    } else if (num_skip == 1) {
+        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(0, 200, 50);
+        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 255, 0);
+    } else if (num_skip == 2) {
+        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(50, 0, 200);
+        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 0, 255);
+    } else {
+        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
+        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 200, 0);
+    }
 }
 
 void Conway::_randomize() {
@@ -521,7 +531,6 @@ void Conway::draw() {
 
         board->print(false);
     }
-
 
     for (i_col = 0; i_col < width; i_col++) {
         for (i_row = 0; i_row < height; i_row++) {
