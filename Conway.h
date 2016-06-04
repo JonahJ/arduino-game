@@ -200,10 +200,12 @@ private:
     Adafruit_NeoMatrix * led_matrix;
 
     uint8_t num_cells_active_surrounding;
+
     uint8_t bound_col_min;
     uint8_t bound_col_max;
     uint8_t bound_row_min;
     uint8_t bound_row_max;
+
     uint8_t i_col_check;
     uint8_t i_row_check;
 
@@ -343,8 +345,6 @@ void Conway::_initColors() {
     // colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 0);
 
     // return;
-
-
 }
 
 void Conway::_randomize() {
@@ -493,7 +493,6 @@ void Conway::_newRound() {
 }
 
 void Conway::_drawCell(uint8_t x, uint8_t y) {
-
     #if (CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL)
         #if (CONWAY_WIPE_EFFECT_DRAW_MARKER)
             led_matrix->drawPixel(x, y, colors[CELL_STATE_WIPE]);
