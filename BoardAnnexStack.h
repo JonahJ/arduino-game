@@ -4,6 +4,18 @@
 #include "Board.h"
 
 /*******************************************************************************
+ *                               Board Settings                                *
+ *******************************************************************************/
+
+/**
+ * Check history so that we can reset if in a "stuck" state, i.e. the same board
+ * for more than 1 move
+ */
+#ifndef CONWAY_CHECK_HISTORY
+    #define CONWAY_CHECK_HISTORY true
+#endif /* CONWAY_CHECK_HISTORY */
+
+/*******************************************************************************
  *                                 Board Next                                  *
  *******************************************************************************/
 
@@ -18,7 +30,10 @@ private:
     bool top_row_storing_annex;
 
     uint8_t i_row_in_memory;
-    bool rows_same;
+
+    #if (CONWAY_CHECK_HISTORY)
+        bool all_i_assigning_same;
+    #endif /* CONWAY_CHECK_HISTORY */
 
 public:
     BoardAnnex(uint8_t _width, uint8_t _height);
@@ -32,7 +47,12 @@ public:
 
     void reset();
 
-    bool copyRow(Board * other_board);
+    #if (CONWAY_CHECK_HISTORY)
+        bool copyRow(Board * other_board);
+    #else
+        void copyRow(Board * other_board);
+    #endif /* CONWAY_CHECK_HISTORY */
+
     void finishRow();
 };
 
@@ -40,7 +60,9 @@ BoardAnnex::BoardAnnex(uint8_t _width, uint8_t _height): Board(_width, _height) 
     top_row_i_row = 0;
     i_row_in_memory = 0;
 
-    rows_same = true;
+    #if (CONWAY_CHECK_HISTORY)
+        all_i_assigning_same = true;
+    #endif
 }
 
 uint8_t BoardAnnex::getState(uint8_t x, uint8_t y) {
@@ -134,24 +156,35 @@ void BoardAnnex::reset() {
  * @param  other_board Board to copy over to
  * @return             truth of the rows being the same
  */
-bool BoardAnnex::copyRow(Board * other_board) {
-    rows_same = true;
 
-    for (uint8_t i_index = 0; i_index < other_board->getHeight(); i_index++) {
-        // Serial.println("cell " + String(i_col) + " = " + String(Board::getState(i_col, 0)));
+#if (CONWAY_CHECK_HISTORY)
+    bool BoardAnnex::copyRow(Board * other_board) {
+        all_i_assigning_same = true;
 
-        /**
-         * Check if row is same
-         */
-        if (rows_same) rows_same &= (other_board->getState(i_index, top_row_i_row) == getState(i_index, top_row_i_row));
+        for (uint8_t i_index = 0; i_index < other_board->getHeight(); i_index++) {
+            // Serial.println("cell " + String(i_col) + " = " + String(Board::getState(i_col, 0)));
 
-        other_board->setState(i_index, top_row_i_row, getState(i_index, top_row_i_row));
+            /**
+             * Check if row is same
+             */
+            if (all_i_assigning_same) all_i_assigning_same &= (other_board->getState(i_index, top_row_i_row) == getState(i_index, top_row_i_row));
+
+            other_board->setState(i_index, top_row_i_row, getState(i_index, top_row_i_row));
+        }
+
+        finishRow();
+
+        return all_i_assigning_same;
     }
+#else
+    void BoardAnnex::copyRow(Board * other_board) {
+        for (uint8_t i_index = 0; i_index < other_board->getHeight(); i_index++) {
+            other_board->setState(i_index, top_row_i_row, getState(i_index, top_row_i_row));
+        }
 
-    finishRow();
-
-    return rows_same;
-}
+        finishRow();
+    }
+#endif /* CONWAY_CHECK_HISTORY */
 
 void BoardAnnex::finishRow() {
     /**

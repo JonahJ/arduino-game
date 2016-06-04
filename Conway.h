@@ -29,7 +29,15 @@
 #endif /* CONWAY_CHECK_HISTORY */
 
 /**
- * Hold full 2D board to check or minimize to only 2 rows.
+ * Hold full 2D board to check or minimize to only 2 rows. This has large
+ * effects on memory capacity.
+ *
+ *                       ------------------------------
+ *                       | Setting |  Memory Capacity |
+ *                       ------------------------------
+ *                       |   false |       O(2wh)     |
+ *                       |   true  |       O(wh + 2w) |
+ *                       ------------------------------
  */
 #ifndef CONWAY_CHECKING_BOARD_MINIMIZE
     #define CONWAY_CHECKING_BOARD_MINIMIZE true
@@ -37,7 +45,7 @@
 
 /**
  * Use stack to hold minimimized checking board. This is easier logic, but
- * requires more context switching and copying over rows, i.e. slower
+ * requires more context switching and copying over rows, i.e. it is slower
  */
 #ifndef CONWAY_CHECKING_BOARD_USE_STACK
     #define CONWAY_CHECKING_BOARD_USE_STACK false
@@ -145,14 +153,12 @@
 
 #include "Board.h"
 
-#if CONWAY_CHECKING_BOARD_MINIMIZE
-    #if CONWAY_CHECKING_BOARD_USE_STACK
+#if (CONWAY_CHECKING_BOARD_MINIMIZE)
+    #if (CONWAY_CHECKING_BOARD_USE_STACK)
         #include "BoardAnnexStack.h"
     #else
         #include "BoardAnnex.h"
     #endif /* CONWAY_CHECKING_BOARD_USE_STACK */
-#else
-    #include "Board.h"
 #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
 
 /*******************************************************************************
@@ -163,7 +169,7 @@ class Conway {
 private:
     Board * board;
 
-    #if CONWAY_CHECKING_BOARD_MINIMIZE
+    #if (CONWAY_CHECKING_BOARD_MINIMIZE)
         BoardAnnex * board_next;
     #else
         Board * board_next;
@@ -264,7 +270,13 @@ Conway::Conway(
     // if (row_wise_annex) board_next = new BoardAnnex(2, height);
     // else
 
-    board_next = new BoardAnnex(width, 2);
+
+
+    #if (CONWAY_CHECKING_BOARD_MINIMIZE)
+        board_next = new BoardAnnex(width, 2);
+    #else
+        board_next = new Board(width, height);
+    #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
 }
 
 void Conway::_initColors() {
@@ -374,20 +386,20 @@ void Conway::_randomize() {
     /**
      * Small Exploder
      */
-    i_col = i_row = 3;
-    if (width == height) {
-        i_col = width / 2;
-        i_row = height / 2;
-    }
-    board->setAlive(i_col    , i_row - 1);
-    board->setAlive(i_col - 1, i_row    );
-    board->setAlive(i_col    , i_row    );
-    board->setAlive(i_col + 1, i_row    );
-    board->setAlive(i_col - 1, i_row + 1);
-    board->setAlive(i_col + 1, i_row + 1);
-    board->setAlive(i_col    , i_row + 2);
-    any_cells_alive = true;
-    return;
+    // i_col = i_row = 3;
+    // if (width == height) {
+    //     i_col = width / 2;
+    //     i_row = height / 2;
+    // }
+    // board->setAlive(i_col    , i_row - 1);
+    // board->setAlive(i_col - 1, i_row    );
+    // board->setAlive(i_col    , i_row    );
+    // board->setAlive(i_col + 1, i_row    );
+    // board->setAlive(i_col - 1, i_row + 1);
+    // board->setAlive(i_col + 1, i_row + 1);
+    // board->setAlive(i_col    , i_row + 2);
+    // any_cells_alive = true;
+    // return;
 
 
     /**
@@ -567,6 +579,15 @@ void Conway::update() {
                 any_cells_alive = true;
             }
 
+            #if (CONWAY_CHECK_HISTORY)
+                #if (!CONWAY_CHECKING_BOARD_MINIMIZE)
+                    if(!board_same) continue;
+
+                    if (board->getState(i_col, i_row) != board_next->getState(i_col, i_row)) {
+                        board_same = false;
+                    }
+                #endif /* !CONWAY_CHECKING_BOARD_MINIMIZE */
+            #endif /* CONWAY_CHECK_HISTORY */
         }
 
         /**
@@ -574,23 +595,34 @@ void Conway::update() {
          * Check to see if top row is the same. Clear top, assign bottom to top,
          * then clear bottom.
          */
+        #if (CONWAY_CHECKING_BOARD_MINIMIZE)
+            #if (CONWAY_CHECK_HISTORY)
+                if(i_row > 0) board_same &= board_next->copyRow(board);
+            #else
+                if(i_row > 0) board_next->copyRow(board);
+            #endif /* CONWAY_CHECK_HISTORY */
 
-        #if (CONWAY_CHECK_HISTORY)
-            if(i_row > 0) board_same &= board_next->copyRow(board);
-        #else
-            if(i_row > 0) board_next->copyRow(board);
-        #endif
-
-        board_next->finishRow();
+            #if (!CONWAY_CHECKING_BOARD_USE_STACK)
+                board_next->finishRow();
+            #endif /* CONWAY_CHECKING_BOARD_USE_STACK */
+        #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
     }
 
-    #if (CONWAY_CHECK_HISTORY)
-        board_same &= board_next->copyRow(board);
-    #else
-        board_next->copyRow(board);
-    #endif
+    #if (CONWAY_CHECKING_BOARD_MINIMIZE)
+        #if (CONWAY_CHECK_HISTORY)
+            board_same &= board_next->copyRow(board);
 
-    // Serial.println("Same: " + String(board_same));
+            #if (CONWAY_CHECKING_BOARD_USE_STACK)
+                board_same &= board_next->copyRow(board);
+            #endif /* CONWAY_CHECKING_BOARD_USE_STACK */
+        #else
+            board_next->copyRow(board);
+
+            #if (CONWAY_CHECKING_BOARD_USE_STACK)
+                board_next->copyRow(board);
+            #endif /* CONWAY_CHECKING_BOARD_USE_STACK */
+        #endif /* CONWAY_CHECK_HISTORY */
+    #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
 
     #if (CONWAY_CHECK_HISTORY)
         if (board_same) {
@@ -600,67 +632,11 @@ void Conway::update() {
             _newRound();
             return;
         }
-    #endif
+    #endif /* CONWAY_CHECK_HISTORY*/
 
-
-
-    // board_next->reset();
-    // any_cells_alive = false;
-
-    // /**
-    //  * Compute what is alive in the next round
-    //  */
-    // for (i_col = 0; i_col < width; i_col++) {
-    //     for (i_row = 0; i_row < height; i_row++) {
-    //         _assignNumberCellsActiveSurrounding(i_col, i_row);
-
-    //         /**
-    //          * Decide if alive or CELL_STATE_DEAD
-    //          */
-    //         if (board->getState(i_col, i_row) >= CELL_STATE_ALIVE) {
-    //             if (num_cells_active_surrounding == 2 || num_cells_active_surrounding == 3) {
-    //                 if (CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_cells_active_surrounding);
-    //                 else board_next->setAlive(i_col, i_row);
-
-    //                 any_cells_alive = true;
-    //             }
-    //         }
-    //         else if (num_cells_active_surrounding == 3) {
-    //             if (CONWAY_ASSIGN_DENSITY) board_next->setState(i_col, i_row, num_cells_active_surrounding);
-    //             else board_next->setAlive(i_col, i_row);
-
-    //             any_cells_alive = true;
-    //         }
-    //     }
-    // }
-
-    // if (CONWAY_CHECK_HISTORY) {
-    //     board_different = false;
-
-    //     for (i_col = 0; i_col < width; i_col++) {
-    //         for (i_row = 0; i_row < height; i_row++) {
-    //             if (board->getState(i_col, i_row) != board_next->getState(i_col, i_row)) {
-    //                 board_different = true;
-    //                 break;
-    //             }
-    //         }
-    //         if (board_different) break;
-    //     }
-
-    //     if (!board_different) {
-    //         Serial.println("Board Stuck in same state");
-    //         _newRound();
-    //         return;
-    //     }
-    // }
-
-    // /**
-    //  * Copy Board
-    //  */
-    // board->copyBoard(board_next);
-
-
-
+    #if (!CONWAY_CHECKING_BOARD_MINIMIZE)
+        board->copyBoard(board_next);
+    #endif /* !CONWAY_CHECKING_BOARD_MINIMIZE */
 
     return;
 }
