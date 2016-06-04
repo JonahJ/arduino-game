@@ -158,13 +158,13 @@
     #define PSTR /* Make Arduino Due happy */
 #endif /* PSTR */
 
-#include "Board.h"
+#include "boards/Board.h"
 
 #if (CONWAY_CHECKING_BOARD_MINIMIZE)
     #if (CONWAY_CHECKING_BOARD_USE_STACK)
-        #include "BoardAnnexStack.h"
+        #include "boards/BoardAnnexStack.h"
     #else
-        #include "BoardAnnex.h"
+        #include "boards/BoardAnnex.h"
     #endif /* CONWAY_CHECKING_BOARD_USE_STACK */
 #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
 
