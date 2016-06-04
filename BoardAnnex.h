@@ -134,9 +134,9 @@ void BoardAnnex::reset() {
  * being the same
  *
  * @param  {Board} other_board  Board to copy over to
- * @return {bool}               truth of the rows being the same
+ * @return {bool or void}       truth of the rows being the same if
+ *                              CONWAY_CHECK_HISTORY is true
  */
-
 #if (CONWAY_CHECK_HISTORY)
     bool BoardAnnex::copyRow(Board * other_board) {
         all_i_assigning_same = true;

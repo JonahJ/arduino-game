@@ -1,5 +1,5 @@
-#ifndef BoardNext_h
-#define BoardNext_h
+#ifndef BoardAnnexStack_h
+#define BoardAnnexStack_h
 
 #include "Board.h"
 
@@ -12,7 +12,7 @@
  * represents stored final state of row back by 1, row 2 represents the temp
  * row to store current row's next state.
  */
-class BoardNext: public Board {
+class BoardAnnex: public Board {
 private:
     uint8_t top_row_i_row;
     bool top_row_storing_annex;
@@ -21,7 +21,7 @@ private:
     bool rows_same;
 
 public:
-    BoardNext(uint8_t _width, uint8_t _height);
+    BoardAnnex(uint8_t _width, uint8_t _height);
 
     uint8_t getState(uint8_t x, uint8_t y);
     void print(bool verbose);
@@ -36,20 +36,20 @@ public:
     void finishRow();
 };
 
-BoardNext::BoardNext(uint8_t _width, uint8_t _height): Board(_width, _height) {
+BoardAnnex::BoardAnnex(uint8_t _width, uint8_t _height): Board(_width, _height) {
     top_row_i_row = 0;
     i_row_in_memory = 0;
 
     rows_same = true;
 }
 
-uint8_t BoardNext::getState(uint8_t x, uint8_t y) {
+uint8_t BoardAnnex::getState(uint8_t x, uint8_t y) {
     i_row_in_memory = y - top_row_i_row;
 
     return Board::getState(x, i_row_in_memory);
 }
 
-void BoardNext::print(bool verbose = false) {
+void BoardAnnex::print(bool verbose = false) {
     if (verbose) {
         Serial.println("Current Top Row: " + String(top_row_i_row));
     }
@@ -102,7 +102,7 @@ void BoardNext::print(bool verbose = false) {
     }
 }
 
-void BoardNext::setState(uint8_t x, uint8_t y, uint8_t state) {
+void BoardAnnex::setState(uint8_t x, uint8_t y, uint8_t state) {
     i_row_in_memory = y - top_row_i_row;
 
     // Serial.println("( " + String(x) + ", " + String(y) + ") => (" + String(x) + ", " + String(i_row_in_memory) + " )");
@@ -110,20 +110,20 @@ void BoardNext::setState(uint8_t x, uint8_t y, uint8_t state) {
     Board::setState(x, i_row_in_memory, state);
 }
 
-void BoardNext::setAlive(uint8_t x, uint8_t y) {
+void BoardAnnex::setAlive(uint8_t x, uint8_t y) {
     i_row_in_memory = y - top_row_i_row;
 
     Board::setAlive(x, i_row_in_memory);
 }
 
-void BoardNext::setDead(uint8_t x, uint8_t y) {
+void BoardAnnex::setDead(uint8_t x, uint8_t y) {
     i_row_in_memory = y - top_row_i_row;
 
     Board::setDead(x, i_row_in_memory);
 }
 
 
-void BoardNext::reset() {
+void BoardAnnex::reset() {
     top_row_i_row = 0;
     Board::reset();
 }
@@ -134,7 +134,7 @@ void BoardNext::reset() {
  * @param  other_board Board to copy over to
  * @return             truth of the rows being the same
  */
-bool BoardNext::copyRow(Board * other_board) {
+bool BoardAnnex::copyRow(Board * other_board) {
     rows_same = true;
 
     for (uint8_t i_index = 0; i_index < other_board->getHeight(); i_index++) {
@@ -153,7 +153,7 @@ bool BoardNext::copyRow(Board * other_board) {
     return rows_same;
 }
 
-void BoardNext::finishRow() {
+void BoardAnnex::finishRow() {
     /**
      * Shift memory up by 1. NULL out bottom row
      */
@@ -164,4 +164,4 @@ void BoardNext::finishRow() {
 
     top_row_i_row++;
 }
-#endif /* BoardNext_h */
+#endif /* BoardAnnexStack_h */
