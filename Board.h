@@ -14,6 +14,13 @@
 #endif /* BOARD_DEBUG */
 
 /**
+ * Debug in verbose mode. Additional print statements
+ */
+#ifndef BOARD_DEBUG_VERBOSE
+    #define BOARD_DEBUG_VERBOSE false
+#endif /* BOARD_DEBUG_VERBOSE */
+
+/**
  * Print state DEAD or not. When false requires two lookups to a given cell, but
  * prints a blank string to the Serial instead of the CELL_STATE_DEAD state.
  */
@@ -97,7 +104,7 @@ public:
     uint8_t getWidth() const;
     uint8_t getHeight() const;
     uint8_t getState(uint8_t x, uint8_t y);
-    void print(bool verbose);
+    void print();
 
     void setState(uint8_t x, uint8_t y, uint8_t state);
     void setAlive(uint8_t x, uint8_t y);
@@ -167,13 +174,14 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
     return cell_state;
 }
 
-void Board::print(bool verbose = false) {
-    if (verbose) {
-        Serial.println("Printing Board");
+void Board::print() {
+
+    #if (BOARD_DEBUG_VERBOSE)
+        // Serial.println("Printing Board");
         Serial.println("Width " + String(width));
         Serial.println("Height " + String(height));
         // Serial.println("Any Active: " + String(any_cells_alive));
-    }
+    #endif /* BOARD_DEBUG_VERBOSE */
 
     for (i_col = 0; i_col < width; i_col++) {
         if (i_col == 0) {

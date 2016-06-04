@@ -36,7 +36,7 @@ private:
 public:
     BoardAnnex(uint8_t _width, uint8_t _height);
 
-    void print(bool verbose);
+    void print();
 
     void setState(uint8_t x, uint8_t y, uint8_t state);
     void setAlive(uint8_t x, uint8_t y);
@@ -76,11 +76,12 @@ BoardAnnex::BoardAnnex(uint8_t _width, uint8_t _height): Board(_width, _height) 
  *
  * @param {Bool} verbose mode for more diagnostic info
  */
-void BoardAnnex::print(bool verbose = false) {
-    if (verbose) {
+void BoardAnnex::print() {
+
+    #if (BOARD_DEBUG_VERBOSE)
         Serial.println("Current Top Index: " + String(reader_i));
         Serial.println("Reader: " + String(i_writer));
-    }
+    #endif /* BOARD_DEBUG_VERBOSE */
 
     Board::print();
 }

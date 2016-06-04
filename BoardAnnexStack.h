@@ -39,7 +39,7 @@ public:
     BoardAnnex(uint8_t _width, uint8_t _height);
 
     uint8_t getState(uint8_t x, uint8_t y);
-    void print(bool verbose);
+    void print();
 
     void setState(uint8_t x, uint8_t y, uint8_t state);
     void setAlive(uint8_t x, uint8_t y);
@@ -71,10 +71,11 @@ uint8_t BoardAnnex::getState(uint8_t x, uint8_t y) {
     return Board::getState(x, i_row_in_memory);
 }
 
-void BoardAnnex::print(bool verbose = false) {
-    if (verbose) {
+void BoardAnnex::print() {
+
+    #if (BOARD_DEBUG_VERBOSE)
         Serial.println("Current Top Row: " + String(top_row_i_row));
-    }
+    #endif /* BOARD_DEBUG_VERBOSE */
 
     for (i_col = 0; i_col < getWidth(); i_col++) {
         if (i_col == 0) {

@@ -75,12 +75,19 @@
 #endif /* CONWAY_ASSIGN_DENSITY */
 
 /**
+ * Draw in simple mode, i.e. less logic to follow and less context switching
+ */
+#ifndef CONWAY_DRAW_MODE_SIMPLE
+    #define CONWAY_DRAW_MODE_SIMPLE false
+#endif /* CONWAY_DRAW_MODE_SIMPLE */
+
+/**
  * Draw board spiral style. Assumes board is equal in width and height. Uses
  * a bit more memory than typical col -> row draw
  */
-#ifndef CONWAY_DRAW_SPIRAL
-    #define CONWAY_DRAW_SPIRAL false
-#endif CONWAY_DRAW_SPIRAL /* CONWAY_DRAW_SPIRAL */
+#ifndef CONWAY_DRAW_MODE_SPIRAL
+    #define CONWAY_DRAW_MODE_SPIRAL false
+#endif CONWAY_DRAW_MODE_SPIRAL /* CONWAY_DRAW_MODE_SPIRAL */
 
 /**
  * Draw board one row at a time.
@@ -200,7 +207,7 @@ private:
     uint8_t i_col_check;
     uint8_t i_row_check;
 
-    #if (CONWAY_DRAW_SPIRAL)
+    #if (CONWAY_DRAW_MODE_SPIRAL)
         uint8_t spiral_spins;
         uint8_t i_spiral_spin;
         uint8_t spiral_width;
@@ -269,8 +276,6 @@ Conway::Conway(
     // row_wise_annex = !(width <= height);
     // if (row_wise_annex) board_next = new BoardAnnex(2, height);
     // else
-
-
 
     #if (CONWAY_CHECKING_BOARD_MINIMIZE)
         board_next = new BoardAnnex(width, 2);
@@ -542,7 +547,6 @@ void Conway::update() {
         board_same = true;
     #endif /* CONWAY_CHECK_HISTORY */
 
-
     /**
      * Compute what is alive in the next round
      */
@@ -646,31 +650,24 @@ void Conway::draw() {
     #if (CONWAY_DEBUG)
         Serial.println("MOVE");
         // Serial.println("\n\n\n\n\n\n");
-        // _print();
 
-        board->print(false);
+        board->print();
     #endif
 
+    #if (CONWAY_DRAW_MODE_SIMPLE)
+        for (i_col = 0; i_col < width; i_col++) {
+            for (i_row = 0; i_row < height; i_row++) {
+                led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
+            }
+        }
 
-    // led_matrix->drawPixel(1, 1, led_matrix->Color(255, 0, 0));
-    // led_matrix->show();
-    // return;
+        led_matrix->show();
 
-    // uint16_t red = led_matrix->Color(255, 0, 0);
-
-    // for (i_col = 0; i_col < width; i_col++) {
-    //     for (i_row = 0; i_row < height; i_row++) {
-    //         // led_matrix->drawPixel(i_col, i_row, red);
-
-    //         led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
-    //     }
-    // }
-    // led_matrix->show();
-    // return;
-
+        return;
+    #endif /* CONWAY_DRAW_MODE_SIMPLE */
 
     #if (CONWAY_WIPE_EFFECT && CLEAR_ON_REDRAW)
-        #if (CONWAY_DRAW_SPIRAL)
+        #if (CONWAY_DRAW_MODE_SPIRAL)
             for (i_col = 0; i_col < width; i_col++) {
                 for (i_row = 0; i_row < height; i_row++) {
                     led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_DEAD]);
@@ -678,12 +675,12 @@ void Conway::draw() {
             }
         #else
             led_matrix->clear();
-        #endif /* CONWAY_DRAW_SPIRAL */
+        #endif /* CONWAY_DRAW_MODE_SPIRAL */
 
         led_matrix->show();
     #endif /* CONWAY_WIPE_EFFECT && CLEAR_ON_REDRAW */
 
-    #if (CONWAY_DRAW_SPIRAL)
+    #if (CONWAY_DRAW_MODE_SPIRAL)
         spiral_spins = (width / 2) + 1;
         spiral_width = width;
         spiral_height = height;
