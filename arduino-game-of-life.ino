@@ -1,6 +1,6 @@
-#ifndef SPEED
-  #define SPEED 500
-#endif /* SPEED */
+#ifndef DELAY
+  #define DELAY 100
+#endif /* DELAY */
 
 #include "Conway.h"
 
@@ -15,6 +15,6 @@ void setup() {
 
 void loop() {
     game_of_life.draw();
-    delay(SPEED);
+    delay(DELAY);
     game_of_life.update();
 }

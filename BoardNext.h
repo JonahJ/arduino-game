@@ -91,9 +91,12 @@ void BoardNext::print(bool verbose = false) {
 
             if (i_col >= 10) Serial.print(" ");
 
-            if (BOARD_PRINT_CELL_STATE_DEAD) Serial.print(getState(i_col, i_col_annex));
-            else if (getState(i_col, i_col_annex) == CELL_STATE_DEAD) Serial.print(" ");
-            else Serial.print(getState(i_col, i_col_annex));
+            #if (BOARD_PRINT_CELL_STATE_DEAD)
+                Serial.print(getState(i_col, i_col_annex));
+            #else
+                if (getState(i_col, i_col_annex) == CELL_STATE_DEAD) Serial.print(" ");
+                else Serial.print(getState(i_col, i_col_annex));
+            #endif /* BOARD_PRINT_CELL_STATE_DEAD */
         }
         Serial.print("\n");
     }
