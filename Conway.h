@@ -10,7 +10,7 @@
  * current state. This may slow down the board speed
  */
 #ifndef CONWAY_DEBUG
-    #define CONWAY_DEBUG true
+    #define CONWAY_DEBUG false
 #endif /* CONWAY_DEBUG */
 
 /**
@@ -36,6 +36,13 @@
 #endif CLEAR_ON_REDRAW /* CLEAR_ON_REDRAW */
 
 /**
+ * Assign monochrome or color
+ */
+#ifndef CONWAY_ASSIGN_MONOCHROME
+ #define CONWAY_ASSIGN_MONOCHROME false
+#endif /* CONWAY_ASSIGN_MONOCHROME */
+
+/**
  * Use density for positions. Requires more space, but will show colors
  * depending on how many cells are active around a given cell. Note will require
  * at least 2 bits for a given cell
@@ -56,7 +63,7 @@
  * Draw board one row at a time.
  */
 #ifndef CONWAY_WIPE_EFFECT
-    #define CONWAY_WIPE_EFFECT true
+    #define CONWAY_WIPE_EFFECT false
 #endif CONWAY_WIPE_EFFECT /* CONWAY_WIPE_EFFECT */
 
 /**
@@ -64,7 +71,7 @@
  * imposed by redrawing by the NeoMatrix library
  */
 #ifndef CONWAY_WIPE_EFFECT_DELAY
-    #define CONWAY_WIPE_EFFECT_DELAY 100
+    #define CONWAY_WIPE_EFFECT_DELAY 0
 #endif CONWAY_WIPE_EFFECT_DELAY /* CONWAY_WIPE_EFFECT_DELAY */
 
 /**
@@ -106,7 +113,7 @@
 #endif /* CELL_STATE_WIPE */
 
 #ifndef CELL_STATE_MAX
-    #define CELL_STATE_MAX CELL_STATE_ALIVE_HIGH
+    #define CELL_STATE_MAX CELL_STATE_WIPE
 #endif /* CELL_STATE_MAX */
 
 
@@ -246,41 +253,67 @@ void Conway::_initColors() {
 
     delete colors;
 
-    colors = new uint16_t [CELL_STATE_MAX];
+    colors = new uint16_t [CELL_STATE_MAX - 1];
 
     colors[CELL_STATE_DEAD]         = led_matrix->Color(0, 0, 0);
-    colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 255, 255);
+    #if CONWAY_ASSIGN_MONOCHROME
+        colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 255, 255);
+
+        #if (CONWAY_ASSIGN_DENSITY)
+            colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(150, 150, 150);
+            colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 255, 255);
+        #endif /* CONWAY_ASSIGN_DENSITY */
+    #else
+        /**
+         * Compute a random color
+         */
+
+        randomSeed(analogRead(0));
+        randomSeed(analogRead(random(0, 5)));
+
+        num_skip = random(0, 3);
+
+        if (num_skip == 0) {
+            colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 200, 0);
+
+            #if (CONWAY_ASSIGN_DENSITY)
+                colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
+                colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 200, 0);
+            #endif /* CONWAY_ASSIGN_DENSITY */
+        } else if (num_skip == 1) {
+            colors[CELL_STATE_ALIVE]        = led_matrix->Color(0, 255, 0);
+
+            #if (CONWAY_ASSIGN_DENSITY)
+                colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(0, 200, 50);
+                colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 255, 0);
+            #endif /* CONWAY_ASSIGN_DENSITY */
+        } else if (num_skip == 2) {
+            colors[CELL_STATE_ALIVE]        = led_matrix->Color(0, 0, 255);
+
+            #if (CONWAY_ASSIGN_DENSITY)
+                colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(50, 0, 200);
+                colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 0, 255);
+            #endif /* CONWAY_ASSIGN_DENSITY */
+        }
+    #endif /* CONWAY_ASSIGN_MONOCHROME */
 
     // colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(255, 255, 255);
     // colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 255, 255);
     colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 255);
-
     // colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
     // colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 200, 0);
     // colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 0);
 
     // return;
 
-    randomSeed(analogRead(0));
-    randomSeed(analogRead(random(0, 5)));
 
-    num_skip = random(0, 3);
-
-    if (num_skip == 0) {
-        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
-        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 200, 0);
-    } else if (num_skip == 1) {
-        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(0, 200, 50);
-        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 255, 0);
-    } else if (num_skip == 2) {
-        colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(50, 0, 200);
-        colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 0, 255);
-    }
 }
 
 void Conway::_randomize() {
 
-    Serial.print("Resetting");
+    #if (CONWAY_DEBUG)
+        Serial.println("Resetting");
+    #endif /* CONWAY_DEBUG */
 
     board->reset();
 
