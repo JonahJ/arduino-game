@@ -3,6 +3,20 @@
 
 #include "Board.h"
 
+
+/*******************************************************************************
+ *                               Board Settings                                *
+ *******************************************************************************/
+
+/**
+ * Check history so that we can reset if in a "stuck" state, i.e. the same board
+ * for more than 1 move
+ */
+#ifndef CONWAY_CHECK_HISTORY
+    #define CONWAY_CHECK_HISTORY true
+#endif /* CONWAY_CHECK_HISTORY */
+
+
 /*******************************************************************************
  *                                 Board Next                                  *
  *******************************************************************************/
@@ -15,7 +29,9 @@ private:
     uint8_t reader_i;
     bool i_writer;
 
-    bool all_i_assigning_same;
+    #if (CONWAY_CHECK_HISTORY)
+        bool all_i_assigning_same;
+    #endif /* CONWAY_CHECK_HISTORY */
 
 public:
     BoardAnnex(uint8_t _width, uint8_t _height);
@@ -28,7 +44,12 @@ public:
 
     void reset();
 
-    bool copyRow(Board * other_board);
+    #if (CONWAY_CHECK_HISTORY)
+        bool copyRow(Board * other_board);
+    #else
+        void copyRow(Board * other_board);
+    #endif /* CONWAY_CHECK_HISTORY */
+
     void finishRow();
 };
 
@@ -45,7 +66,9 @@ BoardAnnex::BoardAnnex(uint8_t _width, uint8_t _height): Board(_width, _height) 
     reader_i = 0;
     i_writer = false;
 
-    all_i_assigning_same = true;
+    #if (CONWAY_CHECK_HISTORY)
+        all_i_assigning_same = true;
+    #endif
 }
 
 /**
@@ -113,22 +136,33 @@ void BoardAnnex::reset() {
  * @param  {Board} other_board  Board to copy over to
  * @return {bool}               truth of the rows being the same
  */
-bool BoardAnnex::copyRow(Board * other_board) {
-    all_i_assigning_same = true;
 
-    for (i_col_annex = 0; i_col_annex < size_wise; i_col_annex++) {
-        /**
-         * Check if row is same
-         */
-        if (all_i_assigning_same) all_i_assigning_same &= (other_board->getState(i_col_annex, reader_i) == getState(i_col_annex, !i_writer));
+#if (CONWAY_CHECK_HISTORY)
+    bool BoardAnnex::copyRow(Board * other_board) {
+        all_i_assigning_same = true;
 
-        other_board->setState(i_col_annex, reader_i, getState(i_col_annex, !i_writer));
+        for (i_col_annex = 0; i_col_annex < size_wise; i_col_annex++) {
+            /**
+             * Check if row is same
+             */
+            if (all_i_assigning_same) all_i_assigning_same &= (other_board->getState(i_col_annex, reader_i) == getState(i_col_annex, !i_writer));
+
+            other_board->setState(i_col_annex, reader_i, getState(i_col_annex, !i_writer));
+        }
+
+        reader_i++;
+
+        return all_i_assigning_same;
     }
+#else
+    void BoardAnnex::copyRow(Board * other_board) {
+        for (i_col_annex = 0; i_col_annex < size_wise; i_col_annex++) {
+            other_board->setState(i_col_annex, reader_i, getState(i_col_annex, !i_writer));
+        }
 
-    reader_i++;
-
-    return all_i_assigning_same;
-}
+        reader_i++;
+    }
+#endif /* CONWAY_CHECK_HISTORY */
 
 /**
  * Reset reading row to NULL. Then set that row to be writable

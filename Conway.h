@@ -128,11 +128,6 @@
     #define PSTR /* Make Arduino Due happy */
 #endif /* PSTR */
 
-// uint8_t width = 0;
-// uint8_t height = 0;
-// uint8_t i_col = 0;
-// uint8_t i_row = 0;
-
 #include "Board.h"
 // #include "BoardNext.h"
 #include "BoardAnnex.h"
@@ -186,11 +181,9 @@ private:
 
     void _randomize();
     void _assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y);
-
     #if (CONWAY_ASSIGN_DENSITY)
         void _assignCurrentDensity();
     #endif /* CONWAY_ASSIGN_DENSITY */
-
     void _drawCell(uint8_t x, uint8_t y);
 
     void _newRound();
@@ -248,9 +241,6 @@ Conway::Conway(
 }
 
 void Conway::_initColors() {
-
-    // return;
-
     delete colors;
 
     colors = new uint16_t [CELL_STATE_MAX - 1];
@@ -267,9 +257,10 @@ void Conway::_initColors() {
         /**
          * Compute a random color
          */
-
+        // TODO minimize, but get more random
         randomSeed(analogRead(0));
         randomSeed(analogRead(random(0, 5)));
+        randomSeed(analogRead(num_skip)); // maybe this should be moved up one line?
 
         num_skip = random(0, 3);
 
@@ -294,6 +285,9 @@ void Conway::_initColors() {
                 colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(50, 0, 200);
                 colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 0, 255);
             #endif /* CONWAY_ASSIGN_DENSITY */
+        } else {
+            Serial.println("ERROR HOW DID COLORS GET HERE");
+            Serial.println("num_skip: " + String(num_skip));
         }
     #endif /* CONWAY_ASSIGN_MONOCHROME */
 
@@ -341,13 +335,13 @@ void Conway::_randomize() {
     /**
      * Glider
      */
-    board->setAlive(1, 0);
-    board->setAlive(2, 1);
-    board->setAlive(0, 2);
-    board->setAlive(1, 2);
-    board->setAlive(2, 2);
-    any_cells_alive = true;
-    return;
+    // board->setAlive(1, 0);
+    // board->setAlive(2, 1);
+    // board->setAlive(0, 2);
+    // board->setAlive(1, 2);
+    // board->setAlive(2, 2);
+    // any_cells_alive = true;
+    // return;
 
 
     /**
@@ -491,9 +485,8 @@ void Conway::update() {
      * Check if anything on board
      */
     if (!any_cells_alive) {
-
         #if (CONWAY_DEBUG)
-            Serial.println("NO MORE CELLS CELL_STATE_ALIVE");
+            Serial.println("All cells are dead. Initing new life");
         #endif
 
         _newRound();
@@ -505,7 +498,10 @@ void Conway::update() {
      */
     board_next->reset();
     // any_cells_alive = false;
-    board_same = true;
+
+    #if (CONWAY_CHECK_HISTORY)
+        board_same = true;
+    #endif /* CONWAY_CHECK_HISTORY */
 
 
     /**
