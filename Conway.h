@@ -13,8 +13,13 @@
     #define CONWAY_DEBUG false
 #endif /* CONWAY_DEBUG */
 
+/**
+ * Set to above 0 to have a max number moves before automatic reset. Quick and
+ * dirty way to not get stuck in a repeated state without having 2 full boards
+ * or a hash map.
+ */
 #ifndef CONWAY_MAX_MOVES
-    #define CONWAY_MAX_MOVES 100
+    #define CONWAY_MAX_MOVES 200
 #endif /* CONWAY_MAX_MOVES */
 
 /**
