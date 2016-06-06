@@ -13,6 +13,10 @@
     #define CONWAY_DEBUG false
 #endif /* CONWAY_DEBUG */
 
+#ifndef CONWAY_MAX_MOVES
+    #define CONWAY_MAX_MOVES 100
+#endif /* CONWAY_MAX_MOVES */
+
 /**
  * Brightness for NeoMatrix
  */
@@ -182,6 +186,10 @@ private:
         Board * board_next;
     #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
 
+    #if (CONWAY_MAX_MOVES > 0)
+        uint16_t number_of_rounds_running;
+    #endif /* CONWAY_MAX_MOVES */
+
     bool row_wise_annex;
 
     uint16_t * colors;
@@ -265,6 +273,9 @@ Conway::Conway(
     width = led_matrix->width();
     height = led_matrix->height();
 
+    #if (CONWAY_MAX_MOVES > 0)
+        number_of_rounds_running = 0;
+    #endif /* CONWAY_MAX_MOVES */
     /**
      * Detect largest width of % 8
      */
@@ -483,6 +494,10 @@ void Conway::_assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y) {
 #endif /* CONWAY_ASSIGN_DENSITY */
 
 void Conway::_newRound() {
+    #if (CONWAY_MAX_MOVES > 0)
+        number_of_rounds_running = 0;
+    #endif /* CONWAY_MAX_MOVES */
+
     _randomize();
 
     #if (CONWAY_ASSIGN_DENSITY)
@@ -652,6 +667,18 @@ void Conway::draw() {
 
         board->print();
     #endif
+
+    #if (CONWAY_MAX_MOVES > 0)
+        number_of_rounds_running++;
+
+        if(number_of_rounds_running > CONWAY_MAX_MOVES) {
+            #if (CONWAY_DEBUG)
+                Serial.println("Maximum Number of Moves Ran, resetting board");
+            #endif
+
+            _newRound();
+        }
+    #endif /* CONWAY_MAX_MOVES */
 
     #if (CONWAY_DRAW_MODE_SIMPLE)
         for (i_col = 0; i_col < width; i_col++) {
