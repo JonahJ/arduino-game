@@ -22,7 +22,7 @@
 
 /**
  * Debug mode enables certain verbose messaging, including printing out the
- * current state. This may slow down the board speed
+ * current state. This may slow down the board speed if board is large
  */
 #ifndef CONWAY_DEBUG
     #define CONWAY_DEBUG false
@@ -38,6 +38,13 @@
 #endif /* CONWAY_MAX_MOVES */
 
 /**
+ * Count moves
+ */
+#ifndef CONWAY_COUNT_MOVES
+    #define CONWAY_COUNT_MOVES true
+#endif /* CONWAY_COUNT_MOVES */
+
+/**
  * Brightness for NeoMatrix
  */
 #ifndef BRIGHTNESS
@@ -51,6 +58,19 @@
 #ifndef CONWAY_CHECK_HISTORY
     #define CONWAY_CHECK_HISTORY true
 #endif /* CONWAY_CHECK_HISTORY */
+
+/**
+ * Check history of round - 2 ago. This way if in cycle we can terminate.
+ * Requires much more memory.
+ */
+#ifndef CONWAY_CHECK_IF_IN_CYCLE
+    #define CONWAY_CHECK_IF_IN_CYCLE true
+
+    #undef CONWAY_COUNT_MOVES
+    #ifndef CONWAY_COUNT_MOVES
+        #define CONWAY_COUNT_MOVES true
+    #endif /* CONWAY_COUNT_MOVES */
+#endif /* CONWAY_CHECK_IF_IN_CYCLE */
 
 /**
  * Hold full 2D board to check or minimize to only 2 rows. This has large
@@ -220,9 +240,13 @@ private:
         Board * board_next;
     #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
 
-    #if (CONWAY_MAX_MOVES > 0)
+    #if (CONWAY_CHECK_IF_IN_CYCLE)
+        Board * board_two_ago;
+    #endif /* CONWAY_CHECK_IF_IN_CYCLE */
+
+    #if (CONWAY_COUNT_MOVES > 0)
         uint16_t number_of_rounds_running;
-    #endif /* CONWAY_MAX_MOVES */
+    #endif /* CONWAY_COUNT_MOVES */
 
     bool row_wise_annex;
 

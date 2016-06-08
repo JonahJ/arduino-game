@@ -30,9 +30,9 @@ Conway::Conway(
     width = led_matrix->width();
     height = led_matrix->height();
 
-    #if (CONWAY_MAX_MOVES > 0)
+    #if (CONWAY_COUNT_MOVES > 0)
         number_of_rounds_running = 0;
-    #endif /* CONWAY_MAX_MOVES */
+    #endif /* CONWAY_COUNT_MOVES */
     /**
      * Detect largest width of % 8
      */
@@ -56,6 +56,10 @@ Conway::Conway(
     #else
         board_next = new Board(width, height);
     #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
+
+    #if (CONWAY_CHECK_IF_IN_CYCLE)
+        board_two_ago =  new Board(width, height);
+    #endif /* CONWAY_CHECK_IF_IN_CYCLE */
 }
 
 /**
@@ -139,9 +143,9 @@ void Conway::_randomize() {
     // board->setAlive(1, 1);
     // board->setAlive(1, 2);
 
-    // board->setAlive(1, 0);
-    // board->setAlive(2, 0);
-    // board->setAlive(3, 0);
+    // board->setAlive(1, 2);
+    // board->setAlive(2, 2);
+    // board->setAlive(3, 2);
     // any_cells_alive = true;
     // return;
 
@@ -275,9 +279,9 @@ void Conway::_assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y) {
  * Begin a new round of conway. Reset grid and init colors.
  */
 void Conway::_newRound() {
-    #if (CONWAY_MAX_MOVES > 0)
+    #if (CONWAY_COUNT_MOVES)
         number_of_rounds_running = 0;
-    #endif /* CONWAY_MAX_MOVES */
+    #endif /* CONWAY_COUNT_MOVES */
 
     _randomize();
 
@@ -339,11 +343,19 @@ void Conway::update() {
     if (!any_cells_alive) {
         #if (CONWAY_DEBUG)
             Serial.println("All cells are dead. Initing new life");
-        #endif
+        #endif /* CONWAY_DEBUG */
 
         _newRound();
         return;
     }
+
+    #if (CONWAY_CHECK_IF_IN_CYCLE)
+        if (number_of_rounds_running % 2) {
+            board_two_ago->reset();
+
+            board_two_ago->copyBoard(board);
+        }
+    #endif /* CONWAY_CHECK_IF_IN_CYCLE */
 
     /**
      * Reset board next
@@ -440,7 +452,8 @@ void Conway::update() {
         if (board_same) {
             #if (CONWAY_DEBUG)
                 Serial.println("Board Stuck in same state");
-            #endif
+            #endif /* CONWAY_DEBUG */
+
             _newRound();
             return;
         }
@@ -449,6 +462,45 @@ void Conway::update() {
     #if (!CONWAY_CHECKING_BOARD_MINIMIZE)
         board->copyBoard(board_next);
     #endif /* !CONWAY_CHECKING_BOARD_MINIMIZE */
+
+
+    #if (CONWAY_CHECK_IF_IN_CYCLE)
+        if (!(number_of_rounds_running % 2)) {
+
+            #if (CONWAY_DEBUG)
+                Serial.println("Print board two moves ago");
+
+                board_two_ago->print();
+                board->print();
+            #endif /* CONWAY_DEBUG */
+
+            #if (CONWAY_CHECK_HISTORY)
+                board_same = true;
+            #endif /* CONWAY_CHECK_HISTORY */
+
+            for (i_row = 0; i_row < height; i_row++) {
+                if (!board_same) break;
+
+                for (i_col = 0; i_col < width; i_col++) {
+                    if (board_two_ago->getState(i_col, i_row) != board->getState(i_col, i_row)){
+                        board_same = false;
+                        break;
+                    }
+                }
+
+                if (!board_same) break;
+            }
+
+            if (board_same) {
+                #if (CONWAY_DEBUG)
+                    Serial.println("Board Stuck in cycle");
+                #endif /* CONWAY_DEBUG */
+
+                _newRound();
+                return;
+            }
+        }
+    #endif /* CONWAY_CHECK_IF_IN_CYCLE */
 
     return;
 }
@@ -463,19 +515,21 @@ void Conway::draw() {
         // Serial.println("\n\n\n\n\n\n");
 
         board->print();
-    #endif
+    #endif /* CONWAY_DEBUG */
 
-    #if (CONWAY_MAX_MOVES > 0)
+    #if (CONWAY_COUNT_MOVES)
         number_of_rounds_running++;
 
-        if(number_of_rounds_running > CONWAY_MAX_MOVES) {
-            #if (CONWAY_DEBUG)
-                Serial.println("Maximum Number of Moves Ran, resetting board");
-            #endif
+        #if (CONWAY_MAX_MOVES > 0)
+            if(number_of_rounds_running > CONWAY_MAX_MOVES) {
+                #if (CONWAY_DEBUG)
+                    Serial.println("Maximum Number of Moves Ran, resetting board");
+                #endif /* CONWAY_DEBUG */
 
-            _newRound();
-        }
-    #endif /* CONWAY_MAX_MOVES */
+                _newRound();
+            }
+        #endif /* CONWAY_MAX_MOVES */
+    #endif /* CONWAY_COUNT_MOVES */
 
     #if (CONWAY_DRAW_MODE == CONWAY_DRAW_MODE_SIMPLE)
         for (i_col = 0; i_col < width; i_col++) {
