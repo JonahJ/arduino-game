@@ -34,7 +34,7 @@
  * or a hash map.
  */
 #ifndef CONWAY_MAX_MOVES
-    #define CONWAY_MAX_MOVES 500
+    #define CONWAY_MAX_MOVES -1
 #endif /* CONWAY_MAX_MOVES */
 
 /**
