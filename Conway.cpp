@@ -33,6 +33,11 @@ Conway::Conway(
     #if (CONWAY_COUNT_MOVES > 0)
         number_of_rounds_running = 0;
     #endif /* CONWAY_COUNT_MOVES */
+
+    #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
+        number_of_moves_since_cycle_detected = 0;
+    #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
+
     /**
      * Detect largest width of % 8
      */
@@ -283,6 +288,10 @@ void Conway::_newRound() {
         number_of_rounds_running = 0;
     #endif /* CONWAY_COUNT_MOVES */
 
+    #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
+        number_of_moves_since_cycle_detected = 0;
+    #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
+
     _randomize();
 
     #if (CONWAY_ASSIGN_DENSITY)
@@ -492,12 +501,24 @@ void Conway::update() {
             }
 
             if (board_same) {
+
                 #if (CONWAY_DEBUG)
                     Serial.println("Board Stuck in cycle");
                 #endif /* CONWAY_DEBUG */
 
-                _newRound();
-                return;
+                #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
+                    number_of_moves_since_cycle_detected++;
+
+                    if (number_of_moves_since_cycle_detected >= CONWAY_CYCLE_DETECTED_BUFFER) {
+                        _newRound();
+                        return;
+                    }
+                #else
+                    _newRound();
+                    return;
+                #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
+
+
             }
         }
     #endif /* CONWAY_CHECK_IF_IN_CYCLE */

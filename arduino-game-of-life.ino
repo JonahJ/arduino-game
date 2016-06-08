@@ -1,5 +1,5 @@
 #ifndef DELAY
-    #define DELAY 200
+    #define DELAY 200    
 #endif /* DELAY */
 
 #include "Conway.h"

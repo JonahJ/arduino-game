@@ -73,6 +73,14 @@
 #endif /* CONWAY_CHECK_IF_IN_CYCLE */
 
 /**
+ * If cycle is found, run this number of moves before making new round
+ */
+#ifndef CONWAY_CYCLE_DETECTED_BUFFER
+    #define CONWAY_CYCLE_DETECTED_BUFFER 3
+#endif /* CONWAY_CYCLE_DETECTED_BUFFER */
+
+
+/**
  * Hold full 2D board to check or minimize to only 2 rows. This has large
  * effects on memory capacity.
  *
@@ -247,6 +255,10 @@ private:
     #if (CONWAY_COUNT_MOVES > 0)
         uint16_t number_of_rounds_running;
     #endif /* CONWAY_COUNT_MOVES */
+
+    #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
+        uint8_t number_of_moves_since_cycle_detected;
+    #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
 
     bool row_wise_annex;
 
