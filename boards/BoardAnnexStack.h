@@ -52,10 +52,7 @@ public:
     BoardAnnexStack(uint8_t _width, uint8_t _height);
 
     uint8_t getState(uint8_t x, uint8_t y);
-
-    #if (CONWAY_DEBUG)
-        void print();
-    #endif /* CONWAY_DEBUG */
+    void print();
 
     void setState(uint8_t x, uint8_t y, uint8_t state);
     void setAlive(uint8_t x, uint8_t y);

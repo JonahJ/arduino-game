@@ -37,19 +37,6 @@
 
 
 /*******************************************************************************
- *                              Conway Settings                                *
- *******************************************************************************/
-
-/**
- * Debug mode enables certain verbose messaging, including printing out the
- * current state. This may slow down the board speed if board is large
- */
-#ifndef CONWAY_DEBUG
-    #define CONWAY_DEBUG false
-#endif /* CONWAY_DEBUG */
-
-
-/*******************************************************************************
  *                                 Cell Settings                               *
  *******************************************************************************/
 
@@ -124,10 +111,7 @@ public:
     uint8_t getWidth() const;
     uint8_t getHeight() const;
     uint8_t getState(uint8_t x, uint8_t y);
-
-    #if (CONWAY_DEBUG)
-        void print();
-    #endif /* CONWAY_DEBUG */
+    void print();
 
     void setState(uint8_t x, uint8_t y, uint8_t state);
     void setAlive(uint8_t x, uint8_t y);
