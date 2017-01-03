@@ -62,7 +62,7 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
         cell_state = (cell_state | (i_cell_col_value << i_cell_col));
     }
 
-    #if (BOARD_DEBUG)
+    // #if (BOARD_DEBUG)
         if (cell_state != CELL_STATE_DEAD) {
             Serial.println("--------------");
             Serial.println("( " + String(x) + ", " + String(y) + " ) -> " + String(cell_state));
@@ -71,7 +71,7 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
             Serial.println("R: " + String(i_row));
             Serial.println("V: " + String(cell_state));
         }
-    #endif /* BOARD_DEBUG */
+    // #endif /* BOARD_DEBUG */
 
     return cell_state;
 }
@@ -81,12 +81,12 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
  */
 void Board::print() {
 
-    #if (BOARD_DEBUG_VERBOSE)
+    // #if (BOARD_DEBUG_VERBOSE)
         // Serial.println("Printing Board");
         Serial.println("Width " + String(width));
         Serial.println("Height " + String(height));
         // Serial.println("Any Active: " + String(any_cells_alive));
-    #endif /* BOARD_DEBUG_VERBOSE */
+    // #endif /* BOARD_DEBUG_VERBOSE */
 
     for (i_col = 0; i_col < width; i_col++) {
         if (i_col == 0) {
@@ -152,9 +152,9 @@ void Board::setState(uint8_t x, uint8_t y, uint8_t state) {
 
     if (state > CELL_STATE_ALIVE) { /* Avoid taking pow */
         if (state > pow(2, (CELL_WIDTH)) - 1) {
-            #if (BOARD_DEBUG)
+            // #if (BOARD_DEBUG)
                 Serial.println("Warning, state is too high for CELL_WIDTH. Setting to max.");
-            #endif /* BOARD_DEBUG */
+            // #endif /* BOARD_DEBUG */
 
             state = pow(2, (CELL_WIDTH)) - 1;
         }

@@ -92,7 +92,7 @@
  *                       ------------------------------
  */
 #ifndef CONWAY_CHECKING_BOARD_MINIMIZE
-    #define CONWAY_CHECKING_BOARD_MINIMIZE true
+    #define CONWAY_CHECKING_BOARD_MINIMIZE false
 #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
 
 /**
@@ -221,13 +221,13 @@
 
 #include "boards/Board.h"
 
-#if (CONWAY_CHECKING_BOARD_MINIMIZE)
-    #if (CONWAY_CHECKING_BOARD_USE_STACK)
-        #include "boards/BoardAnnexStack.h"
-    #else
-        #include "boards/BoardAnnex.h"
-    #endif /* CONWAY_CHECKING_BOARD_USE_STACK */
-#endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
+// #if (CONWAY_CHECKING_BOARD_MINIMIZE)
+//     #if (CONWAY_CHECKING_BOARD_USE_STACK)
+//         #include "boards/BoardAnnexStack.h"
+//     #else
+//         #include "boards/BoardAnnex.h"
+//     #endif /* CONWAY_CHECKING_BOARD_USE_STACK */
+// #endif /* CONWAY_CHECKING_BOARD_MINIMIZE */
 
 
 /*******************************************************************************
