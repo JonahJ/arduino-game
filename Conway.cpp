@@ -65,15 +65,12 @@ Conway::Conway(
     #if (CONWAY_CHECK_IF_IN_CYCLE)
         board_two_ago =  new Board(width, height);
     #endif /* CONWAY_CHECK_IF_IN_CYCLE */
-<<<<<<< HEAD
 
     // delete colors;
 
     colors = new uint16_t [CELL_STATE_MAX - 1];
     colors[CELL_STATE_DEAD] = led_matrix->Color(0, 0, 0);
     colors[CELL_STATE_WIPE] = led_matrix->Color(255, 255, 255);
-=======
->>>>>>> parent of 9ab24e9... pretty up
 }
 
 /**
@@ -81,17 +78,13 @@ Conway::Conway(
  * choose a color scheme.
  */
 void Conway::_initColors() {
-    delete colors;
 
-    colors = new uint16_t [CELL_STATE_MAX - 1];
-
-    colors[CELL_STATE_DEAD]         = led_matrix->Color(0, 0, 0);
-    #if CONWAY_ASSIGN_MONOCHROME
-        colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 255, 255);
+    #if (CONWAY_ASSIGN_MONOCHROME)
+        colors[CELL_STATE_ALIVE]                = led_matrix->Color(255, 255, 255);
 
         #if (CONWAY_ASSIGN_DENSITY)
-            colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(150, 150, 150);
-            colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 255, 255);
+            colors[CELL_STATE_ALIVE_LOW]        = led_matrix->Color(150, 150, 150);
+            colors[CELL_STATE_ALIVE_HIGH]       = led_matrix->Color(255, 255, 255);
         #endif /* CONWAY_ASSIGN_DENSITY */
     #else
         /**
@@ -105,35 +98,38 @@ void Conway::_initColors() {
         num_skip = random(0, 3);
 
         if (num_skip == 0) {
-            colors[CELL_STATE_ALIVE]        = led_matrix->Color(255, 200, 0);
+            colors[CELL_STATE_ALIVE]            = led_matrix->Color(255, 200, 0);
 
             #if (CONWAY_ASSIGN_DENSITY)
                 colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
                 colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 200, 0);
             #endif /* CONWAY_ASSIGN_DENSITY */
         } else if (num_skip == 1) {
-            colors[CELL_STATE_ALIVE]        = led_matrix->Color(0, 255, 0);
+            colors[CELL_STATE_ALIVE]            = led_matrix->Color(0, 255, 0);
 
             #if (CONWAY_ASSIGN_DENSITY)
                 colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(0, 200, 50);
                 colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 255, 0);
             #endif /* CONWAY_ASSIGN_DENSITY */
         } else if (num_skip == 2) {
-            colors[CELL_STATE_ALIVE]        = led_matrix->Color(0, 0, 255);
+            colors[CELL_STATE_ALIVE]            = led_matrix->Color(0, 0, 255);
 
             #if (CONWAY_ASSIGN_DENSITY)
                 colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(50, 0, 200);
                 colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(0, 0, 255);
             #endif /* CONWAY_ASSIGN_DENSITY */
         } else {
-            Serial.println("ERROR HOW DID COLORS GET HERE");
-            Serial.println("num_skip: " + String(num_skip));
+
+            #if (CONWAY_DEBUG)
+                Serial.println("ERROR HOW DID COLORS GET HERE");
+                Serial.println("num_skip: " + String(num_skip));
+            #endif /* CONWAY_DEBUG */
         }
     #endif /* CONWAY_ASSIGN_MONOCHROME */
 
     // colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(255, 255, 255);
     // colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 255, 255);
-    colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 255);
+    // colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 255);
     // colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(200, 50, 0);
     // colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 200, 0);
     // colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 0);
@@ -280,6 +276,7 @@ void Conway::_assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y) {
             for (i_row = 0; i_row < height; i_row++) {
                 if (board->getState(i_col, i_row) >= CELL_STATE_ALIVE) {
                     _assignNumberCellsActiveSurrounding(i_col, i_row);
+
                     board->setState(i_col, i_row, num_cells_active_surrounding + CELL_STATE_ALIVE_LOW);
                 }
             }
@@ -339,8 +336,8 @@ void Conway::_drawCell(uint8_t x, uint8_t y) {
  * Init for `setup()` function
  */
 void Conway::init() {
-    led_matrix->begin();
     led_matrix->setBrightness(BRIGHTNESS);
+    led_matrix->begin();
     led_matrix->fillScreen(colors[CELL_STATE_DEAD]);
     led_matrix->show();
 
@@ -423,9 +420,7 @@ void Conway::update() {
                 #if (!CONWAY_CHECKING_BOARD_MINIMIZE)
                     if(!board_same) continue;
 
-                    if (board->getState(i_col, i_row) != board_next->getState(i_col, i_row)) {
-                        board_same = false;
-                    }
+                    if (board->getState(i_col, i_row) != board_next->getState(i_col, i_row)) board_same = false;
                 #endif /* !CONWAY_CHECKING_BOARD_MINIMIZE */
             #endif /* CONWAY_CHECK_HISTORY */
         }
@@ -516,16 +511,13 @@ void Conway::update() {
                 #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
                     number_of_moves_since_cycle_detected++;
 
-                    if (number_of_moves_since_cycle_detected >= CONWAY_CYCLE_DETECTED_BUFFER) {
-                        _newRound();
-                        return;
-                    }
-                #else
-                    _newRound();
+                    if (number_of_moves_since_cycle_detected >= CONWAY_CYCLE_DETECTED_BUFFER) _newRound();
+
                     return;
                 #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
 
-
+                _newRound();
+                return;
             }
         }
     #endif /* CONWAY_CHECK_IF_IN_CYCLE */
