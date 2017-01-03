@@ -1,4 +1,71 @@
-#include "BoardAnnex.h"
+#ifndef BoardAnnex_h
+#define BoardAnnex_h
+
+/*******************************************************************************
+ *                                  Includes                                   *
+ *******************************************************************************/
+
+#include <Arduino.h>
+
+
+/*******************************************************************************
+ *                               Local Includes                                *
+ *******************************************************************************/
+
+#include "Board.h"
+
+
+/*******************************************************************************
+ *                               Board Settings                                *
+ *******************************************************************************/
+
+/**
+ * Check history so that we can reset if in a "stuck" state, i.e. the same board
+ * for more than 1 move
+ */
+#ifndef CONWAY_CHECK_HISTORY
+    #define CONWAY_CHECK_HISTORY true
+#endif /* CONWAY_CHECK_HISTORY */
+
+
+/*******************************************************************************
+ *                                Board Annex                                  *
+ *******************************************************************************/
+
+class BoardAnnex: public Board {
+private:
+    uint8_t size_wise;
+    bool width_wise;
+
+    uint8_t reader_i;
+    bool i_writer;
+
+    #if (CONWAY_CHECK_HISTORY)
+        bool all_i_assigning_same;
+    #endif /* CONWAY_CHECK_HISTORY */
+
+public:
+    BoardAnnex(uint8_t _width, uint8_t _height);
+
+    #if (GAME_DEBUG)
+        void print();
+    #endif /* GAME_DEBUG */
+
+    void setState(uint8_t x, uint8_t y, uint8_t state);
+    void setAlive(uint8_t x, uint8_t y);
+    void setDead(uint8_t x, uint8_t y);
+
+    void reset();
+
+    #if (CONWAY_CHECK_HISTORY)
+        bool copyRow(Board * other_board);
+    #else
+        void copyRow(Board * other_board);
+    #endif /* CONWAY_CHECK_HISTORY */
+
+    void finishRow();
+};
+
 
 /**
  * Init Board Annex
@@ -15,21 +82,23 @@ BoardAnnex::BoardAnnex(uint8_t _width, uint8_t _height): Board(_width, _height) 
 
     #if (CONWAY_CHECK_HISTORY)
         all_i_assigning_same = true;
-    #endif
+    #endif /* CONWAY_CHECK_HISTORY */
 }
 
 /**
  * Print board to Serial
  */
-void BoardAnnex::print() {
+#if (GAME_DEBUG)
+    void BoardAnnex::print() {
 
-    #if (BOARD_DEBUG_VERBOSE)
-        Serial.println("Current Top Index: " + String(reader_i));
-        Serial.println("Reader: " + String(i_writer));
-    #endif /* BOARD_DEBUG_VERBOSE */
+        #if (BOARD_DEBUG_VERBOSE)
+            Serial.println("Current Top Index: " + String(reader_i));
+            Serial.println("Reader: " + String(i_writer));
+        #endif /* BOARD_DEBUG_VERBOSE */
 
-    Board::print();
-}
+        Board::print();
+    }
+#endif /* GAME_DEBUG */
 
 /**
  * Set state of cell
@@ -121,3 +190,6 @@ void BoardAnnex::finishRow() {
         else Board::setState(i_writer, i_col_annex, CELL_STATE_DEAD);
     }
 }
+
+
+#endif /* BoardAnnex_h */
