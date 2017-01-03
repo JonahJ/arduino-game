@@ -11,12 +11,10 @@
 #include <Adafruit_NeoMatrix.h>
 #include <Adafruit_NeoPixel.h>
 
-/**
- * Make Arduino Due happy
- */
 #ifndef PSTR
-    #define PSTR
+    #define PSTR /* Make Arduino Due happy */
 #endif /* PSTR */
+
 
 /*******************************************************************************
  *                              Conway Settings                                *
@@ -156,8 +154,6 @@
  */
 #ifndef CONWAY_DRAW_MODE
     #define CONWAY_DRAW_MODE CONWAY_DRAW_MODE_ROW_WISE
-    // #define CONWAY_DRAW_MODE CONWAY_DRAW_MODE_SPIRAL
-
 #endif CONWAY_DRAW_MODE /* CONWAY_DRAW_MODE */
 
 /**
@@ -277,7 +273,7 @@ private:
 
     #if (CONWAY_CHECK_HISTORY)
         bool board_same;
-    #endif /* CONWAY_CHECK_HISTORY */
+    #endif
 
     Adafruit_NeoMatrix * led_matrix;
 
@@ -296,7 +292,7 @@ private:
         uint8_t i_spiral_spin;
         uint8_t spiral_width;
         uint8_t spiral_height;
-    #endif /* CONWAY_DRAW_MODE_SPIRAL */
+    #endif
 
     void _initColors();
 
@@ -305,11 +301,9 @@ private:
 
     void _randomize();
     void _assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y);
-
     #if (CONWAY_ASSIGN_DENSITY)
         void _assignCurrentDensity();
     #endif /* CONWAY_ASSIGN_DENSITY */
-
     void _drawCell(uint8_t x, uint8_t y);
 
     void _newRound();

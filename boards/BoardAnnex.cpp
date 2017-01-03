@@ -15,23 +15,21 @@ BoardAnnex::BoardAnnex(uint8_t _width, uint8_t _height): Board(_width, _height) 
 
     #if (CONWAY_CHECK_HISTORY)
         all_i_assigning_same = true;
-    #endif /* CONWAY_CHECK_HISTORY */
+    #endif
 }
 
 /**
  * Print board to Serial
  */
-#if (CONWAY_DEBUG)
-    void BoardAnnex::print() {
+void BoardAnnex::print() {
 
-        #if (BOARD_DEBUG_VERBOSE)
-            Serial.println("Current Top Index: " + String(reader_i));
-            Serial.println("Reader: " + String(i_writer));
-        #endif /* BOARD_DEBUG_VERBOSE */
+    #if (BOARD_DEBUG_VERBOSE)
+        Serial.println("Current Top Index: " + String(reader_i));
+        Serial.println("Reader: " + String(i_writer));
+    #endif /* BOARD_DEBUG_VERBOSE */
 
-        Board::print();
-    }
-#endif /* CONWAY_DEBUG */
+    Board::print();
+}
 
 /**
  * Set state of cell

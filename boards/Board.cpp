@@ -79,65 +79,62 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
 /**
  * Print board to Serial
  */
-#if (CONWAY_DEBUG)
-    void Board::print() {
+void Board::print() {
 
-        #if (BOARD_DEBUG_VERBOSE)
-            // Serial.println("Printing Board");
-            Serial.println("Width " + String(width));
-            Serial.println("Height " + String(height));
-            // Serial.println("Any Active: " + String(any_cells_alive));
-        #endif /* BOARD_DEBUG_VERBOSE */
+    #if (BOARD_DEBUG_VERBOSE)
+        // Serial.println("Printing Board");
+        Serial.println("Width " + String(width));
+        Serial.println("Height " + String(height));
+        // Serial.println("Any Active: " + String(any_cells_alive));
+    #endif /* BOARD_DEBUG_VERBOSE */
 
-        for (i_col = 0; i_col < width; i_col++) {
-            if (i_col == 0) {
-                Serial.print("  ");
-
-                if (height >= 10) Serial.print(" ");
-            }
-
+    for (i_col = 0; i_col < width; i_col++) {
+        if (i_col == 0) {
             Serial.print("  ");
-            Serial.print(i_col);
+
+            if (height >= 10) Serial.print(" ");
         }
-        Serial.print("\n");
 
-        for (i_col = 0; i_col < width; i_col++) {
-            if (i_col == 0) {
-                Serial.print("  ");
-
-                if (height >= 10) Serial.print(" ");
-            }
-
-            Serial.print("---");
-
-            if (i_col >= 10) Serial.print("-");
-        }
-        Serial.print("\n");
-
-        for (i_row_annex = 0; i_row_annex < height; i_row_annex++) {
-            if (height >= 10) {
-                if (i_row_annex < 10) Serial.print(" ");
-            }
-
-            Serial.print(i_row_annex);
-            Serial.print(" | ");
-
-            for (uint8_t i_col = 0; i_col < width; i_col++) {
-                if (i_col > 0) Serial.print("  ");
-
-                if (i_col >= 10) Serial.print(" ");
-
-                #if (BOARD_PRINT_CELL_STATE_DEAD)
-                    Serial.print(getState(i_col, i_row_annex));
-                #else
-                    if (getState(i_col, i_row_annex) == CELL_STATE_DEAD) Serial.print(" ");
-                    else Serial.print(getState(i_col, i_row_annex));
-                #endif /* BOARD_PRINT_CELL_STATE_DEAD */
-            }
-            Serial.print("\n");
-        }
+        Serial.print("  ");
+        Serial.print(i_col);
     }
-#endif /* CONWAY_DEBUG */
+    Serial.print("\n");
+
+    for (i_col = 0; i_col < width; i_col++) {
+        if (i_col == 0) {
+            Serial.print("  ");
+
+            if (height >= 10) Serial.print(" ");
+        }
+
+        Serial.print("---");
+
+        if (i_col >= 10) Serial.print("-");
+    }
+    Serial.print("\n");
+
+    for (i_row_annex = 0; i_row_annex < height; i_row_annex++) {
+        if (height >= 10) {
+            if (i_row_annex < 10) Serial.print(" ");
+        }
+        Serial.print(i_row_annex);
+        Serial.print(" | ");
+
+        for (uint8_t i_col = 0; i_col < width; i_col++) {
+            if (i_col > 0) Serial.print("  ");
+
+            if (i_col >= 10) Serial.print(" ");
+
+            #if (BOARD_PRINT_CELL_STATE_DEAD)
+                Serial.print(getState(i_col, i_row_annex));
+            #else
+                if (getState(i_col, i_row_annex) == CELL_STATE_DEAD) Serial.print(" ");
+                else Serial.print(getState(i_col, i_row_annex));
+            #endif /* BOARD_PRINT_CELL_STATE_DEAD */
+        }
+        Serial.print("\n");
+    }
+}
 
 /**
  * Set state of cell
