@@ -71,7 +71,6 @@ Conway::Conway(
     colors = new uint16_t [CELL_STATE_MAX - 1];
     colors[CELL_STATE_DEAD] = led_matrix->Color(0, 0, 0);
     colors[CELL_STATE_WIPE] = led_matrix->Color(255, 255, 255);
-
 }
 
 /**
@@ -149,7 +148,6 @@ void Conway::_randomize() {
 
     board->reset();
 
-
     // board->setAlive(1, 0);
     // board->setAlive(1, 1);
     // board->setAlive(1, 2);
@@ -159,7 +157,6 @@ void Conway::_randomize() {
     // board->setAlive(3, 2);
     // any_cells_alive = true;
     // return;
-
 
     /**
      * Short line
