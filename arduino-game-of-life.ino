@@ -1,5 +1,5 @@
 #ifndef DELAY
-    #define DELAY 100
+    #define DELAY 200    
 #endif /* DELAY */
 
 #include "Conway.h"
@@ -8,20 +8,13 @@
 Conway game_of_life = Conway(8, 8, 2, 2, 6);
 
 void setup() {
-
-    #if (CONWAY_DEBUG)
-        Serial.begin(9600);
-    #endif /* CONWAY_DEBUG */
+    Serial.begin(9600);
 
     game_of_life.init();
 }
 
 void loop() {
     game_of_life.draw();
-
-    #if (DELAY > 0)
-        delay(DELAY);
-    #endif /* DELAY */
-
+    delay(DELAY);
     game_of_life.update();
 }
