@@ -7,11 +7,16 @@
 
 #include "Games/Game.h"
 #include "Games/Conway.h"
+#include "Games/LangstonsAnt.h"
+
 
 // Game game = Game(8, 8, 2, 2, 6);
 
 // Conway game = Conway(8, 8, 1, 1, 6);
-Conway game = Conway(8, 8, 2, 2, 6);
+// Conway game = Conway(8, 8, 2, 2, 6);
+
+LangstonsAnt game = LangstonsAnt(8, 8, 2, 2, 6);
+
 
 void setup() {
 //

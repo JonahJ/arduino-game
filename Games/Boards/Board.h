@@ -126,16 +126,16 @@ public:
     uint8_t getState(uint8_t x, uint8_t y);
 
     #if (GAME_DEBUG)
-        void print();
+        virtual void print();
     #endif /* GAME_DEBUG */
 
-    void setState(uint8_t x, uint8_t y, uint8_t state);
-    void setAlive(uint8_t x, uint8_t y);
-    void setDead(uint8_t x, uint8_t y);
+    virtual void setState(uint8_t x, uint8_t y, uint8_t state);
+    virtual void setAlive(uint8_t x, uint8_t y);
+    virtual void setDead(uint8_t x, uint8_t y);
 
-    void reset();
+    virtual void reset();
 
-    void copyBoard(Board * other_board);
+    virtual void copyBoard(Board * other_board);
 };
 
 

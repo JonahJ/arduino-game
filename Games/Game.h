@@ -28,7 +28,7 @@
  * current state. This may slow down the board speed if board is large
  */
 #ifndef GAME_DEBUG
-    #define GAME_DEBUG false
+    #define GAME_DEBUG true
 #endif /* GAME_DEBUG */
 
 /**
@@ -96,7 +96,7 @@
  * Draw board one row at a time.
  */
 #ifndef GAME_DRAW_EFFECT_WIPE
-    #define GAME_DRAW_EFFECT_WIPE true
+    #define GAME_DRAW_EFFECT_WIPE false
 #endif GAME_DRAW_EFFECT_WIPE /* GAME_DRAW_EFFECT_WIPE */
 
 /**
