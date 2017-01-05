@@ -5,30 +5,11 @@
  *                                  Includes                                   *
  *******************************************************************************/
 
-#include <Arduino.h>
-
-#include <Adafruit_GFX.h>
-#include <Adafruit_NeoMatrix.h>
-#include <Adafruit_NeoPixel.h>
-
-/**
- * Make Arduino Due happy
- */
-#ifndef PSTR
-    #define PSTR
-#endif /* PSTR */
+#include "Game.h"
 
 /*******************************************************************************
  *                              Conway Settings                                *
  *******************************************************************************/
-
-/**
- * Debug mode enables certain verbose messaging, including printing out the
- * current state. This may slow down the board speed if board is large
- */
-#ifndef GAME_DEBUG
-    #define GAME_DEBUG false
-#endif /* GAME_DEBUG */
 
 /**
  * Set to above 0 to have a max number moves before automatic reset. Quick and
@@ -38,20 +19,6 @@
 #ifndef CONWAY_MAX_MOVES
     #define CONWAY_MAX_MOVES -1
 #endif /* CONWAY_MAX_MOVES */
-
-/**
- * Count moves
- */
-#ifndef CONWAY_COUNT_MOVES
-    #define CONWAY_COUNT_MOVES true
-#endif /* CONWAY_COUNT_MOVES */
-
-/**
- * Brightness for NeoMatrix
- */
-#ifndef BRIGHTNESS
-    #define BRIGHTNESS (uint8_t)80
-#endif /* BRIGHTNESS */
 
 /**
  * Check history so that we can reset if in a "stuck" state, i.e. the same board
@@ -68,16 +35,16 @@
 #ifndef CONWAY_CHECK_IF_IN_CYCLE
     #define CONWAY_CHECK_IF_IN_CYCLE true
 
-    #undef CONWAY_COUNT_MOVES
-    #ifndef CONWAY_COUNT_MOVES
-        #define CONWAY_COUNT_MOVES true
-    #endif /* CONWAY_COUNT_MOVES */
+    #undef GAME_COUNT_MOVES
+    #ifndef GAME_COUNT_MOVES
+        #define GAME_COUNT_MOVES true
+    #endif /* GAME_COUNT_MOVES */
 #endif /* CONWAY_CHECK_IF_IN_CYCLE */
 
 /**
  * If cycle is found, run this number of moves before making new round
  */
-#ifndef CONWAY_CYCLE_DETECTED_BUFFER
+#ifndef CxONWAY_CYCLE_DETECTED_BUFFER
     #define CONWAY_CYCLE_DETECTED_BUFFER 3
 #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
 
@@ -106,13 +73,6 @@
 #endif /* CONWAY_CHECKING_BOARD_USE_STACK */
 
 /**
- * Clear board on redraw
- */
-#ifndef CLEAR_ON_REDRAW
-    #define CLEAR_ON_REDRAW false
-#endif CLEAR_ON_REDRAW /* CLEAR_ON_REDRAW */
-
-/**
  * Assign monochrome or color
  */
 #ifndef CONWAY_ASSIGN_MONOCHROME
@@ -128,102 +88,9 @@
     #define CONWAY_ASSIGN_DENSITY true
 #endif /* CONWAY_ASSIGN_DENSITY */
 
-/**
- * Draw in simple mode, i.e. less logic to follow and less context switching
- */
-#ifndef CONWAY_DRAW_MODE_SIMPLE
-    #define CONWAY_DRAW_MODE_SIMPLE 0
-#endif /* CONWAY_DRAW_MODE_SIMPLE */
-
-/**
- * Draw board row wise, with additional features optionally enabled
- */
-#ifndef CONWAY_DRAW_MODE_ROW_WISE
-    #define CONWAY_DRAW_MODE_ROW_WISE CONWAY_DRAW_MODE_SIMPLE + 1
-#endif CONWAY_DRAW_MODE_ROW_WISE /* CONWAY_DRAW_MODE_ROW_WISE */
-
-/**
- * Draw board spiral style. Assumes board is equal in width and height. Uses
- * a bit more memory than typical col -> row draw
- */
-#ifndef CONWAY_DRAW_MODE_SPIRAL
-    #define CONWAY_DRAW_MODE_SPIRAL CONWAY_DRAW_MODE_ROW_WISE + 1
-#endif CONWAY_DRAW_MODE_SPIRAL /* CONWAY_DRAW_MODE_SPIRAL */
-
-/**
- * Draw board spiral style. Assumes board is equal in width and height. Uses
- * a bit more memory than typical col -> row draw
- */
-#ifndef CONWAY_DRAW_MODE
-    #define CONWAY_DRAW_MODE CONWAY_DRAW_MODE_ROW_WISE
-    // #define CONWAY_DRAW_MODE CONWAY_DRAW_MODE_SPIRAL
-
-#endif CONWAY_DRAW_MODE /* CONWAY_DRAW_MODE */
-
-/**
- * Draw board one row at a time.
- */
-#ifndef CONWAY_WIPE_EFFECT
-    #define CONWAY_WIPE_EFFECT false
-#endif CONWAY_WIPE_EFFECT /* CONWAY_WIPE_EFFECT */
-
-/**
- * Additional delay between pixel draws. This is in addition to the delay
- * imposed by redrawing by the NeoMatrix library
- */
-#ifndef CONWAY_WIPE_EFFECT_DELAY
-    #define CONWAY_WIPE_EFFECT_DELAY 0
-#endif CONWAY_WIPE_EFFECT_DELAY /* CONWAY_WIPE_EFFECT_DELAY */
-
-/**
- * Redraws board one cell at a time. This will make the effect quite slow.
- */
-#ifndef CONWAY_WIPE_EFFECT_PER_CELL
-    #define CONWAY_WIPE_EFFECT_PER_CELL false
-#endif CONWAY_WIPE_EFFECT_PER_CELL /* CONWAY_WIPE_EFFECT_PER_CELL */
-
-/**
- * Shows a marker where it is drawing
- */
-#ifndef CONWAY_WIPE_EFFECT_DRAW_MARKER
-    #define CONWAY_WIPE_EFFECT_DRAW_MARKER true
-#endif CONWAY_WIPE_EFFECT_DRAW_MARKER /* CONWAY_WIPE_EFFECT_DRAW_MARKER */
-
-
-/*******************************************************************************
- *                                Cell States                                  *
- *******************************************************************************/
-
-#ifndef CELL_STATE_DEAD
-    #define CELL_STATE_DEAD 0
-#endif /* CELL_STATE_DEAD */
-
-#ifndef CELL_STATE_ALIVE
-    #define CELL_STATE_ALIVE 1
-#endif /* CELL_STATE_ALIVE */
-
-#ifndef CELL_STATE_ALIVE_LOW
-    #define CELL_STATE_ALIVE_LOW  CELL_STATE_ALIVE + 1
-#endif /* CELL_STATE_ALIVE_LOW */
-
-#ifndef CELL_STATE_ALIVE_HIGH
-    #define CELL_STATE_ALIVE_HIGH CELL_STATE_ALIVE_LOW + 1
-#endif /* CELL_STATE_ALIVE_HIGH */
-
-#ifndef CELL_STATE_WIPE
-    #define CELL_STATE_WIPE CELL_STATE_ALIVE_HIGH + 1
-#endif /* CELL_STATE_WIPE */
-
-#ifndef CELL_STATE_MAX
-    #define CELL_STATE_MAX CELL_STATE_WIPE
-#endif /* CELL_STATE_MAX */
-
-
 /*******************************************************************************
  *                               Local Includes                                *
  *******************************************************************************/
-
-#include "Boards/Board.h"
 
 #if (CONWAY_CHECKING_BOARD_MINIMIZE)
     #if (CONWAY_CHECKING_BOARD_USE_STACK)
@@ -238,9 +105,8 @@
  *                                   Conway                                    *
  *******************************************************************************/
 
-class Conway {
+class Conway: public Game {
 private:
-    Board * board;
 
     #if (CONWAY_CHECKING_BOARD_MINIMIZE)
         #if (CONWAY_CHECKING_BOARD_USE_STACK)
@@ -256,30 +122,15 @@ private:
         Board * board_two_ago;
     #endif /* CONWAY_CHECK_IF_IN_CYCLE */
 
-    #if (CONWAY_COUNT_MOVES > 0)
-        uint16_t number_of_rounds_running;
-    #endif /* CONWAY_COUNT_MOVES */
-
     #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
         uint8_t number_of_moves_since_cycle_detected;
     #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
-
-    bool row_wise_annex;
-
-    uint16_t * colors;
-
-    uint8_t i_col;
-    uint8_t i_row;
-    uint8_t width;
-    uint8_t height;
 
     bool any_cells_alive;
 
     #if (CONWAY_CHECK_HISTORY)
         bool board_same;
     #endif /* CONWAY_CHECK_HISTORY */
-
-    Adafruit_NeoMatrix * led_matrix;
 
     uint8_t num_cells_active_surrounding;
 
@@ -290,13 +141,6 @@ private:
 
     uint8_t i_col_check;
     uint8_t i_row_check;
-
-    #if (CONWAY_DRAW_MODE_SPIRAL)
-        uint8_t spiral_spins;
-        uint8_t i_spiral_spin;
-        uint8_t spiral_width;
-        uint8_t spiral_height;
-    #endif /* CONWAY_DRAW_MODE_SPIRAL */
 
     void _initColors();
 
@@ -310,8 +154,7 @@ private:
         void _assignCurrentDensity();
     #endif /* CONWAY_ASSIGN_DENSITY */
 
-    void _drawCell(uint8_t x, uint8_t y);
-
+protected:
     void _newRound();
 
 public:
@@ -323,9 +166,7 @@ public:
         uint8_t pin
     );
 
-    void init();
     void update();
-    void draw();
 };
 
 
@@ -344,42 +185,18 @@ Conway::Conway(
     uint8_t num_boards_x,
     uint8_t num_boards_y,
     uint8_t pin
+): Game(
+    num_pixels_width,
+    num_pixels_height,
+    num_boards_x,
+    num_boards_y,
+    pin
 ) {
-    led_matrix = new Adafruit_NeoMatrix(
-        num_pixels_width,
-        num_pixels_height,
-        num_boards_x,
-        num_boards_y,
-        pin,
-        NEO_TILE_TOP + NEO_TILE_LEFT + NEO_TILE_ROWS    + NEO_TILE_PROGRESSIVE +
-        NEO_TILE_TOP + NEO_TILE_LEFT + NEO_TILE_COLUMNS + NEO_TILE_ZIGZAG,
-        NEO_GRB + NEO_KHZ800
-    );
-
-    width = led_matrix->width();
-    height = led_matrix->height();
-
-    #if (CONWAY_COUNT_MOVES > 0)
-        number_of_rounds_running = 0;
-    #endif /* CONWAY_COUNT_MOVES */
-
     #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
         number_of_moves_since_cycle_detected = 0;
     #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
 
-    /**
-     * Detect largest width of % 8
-     */
-    // if (width % 8 != 0) {
-    //     return;
-    // }
-
     any_cells_alive = false;
-    board = new Board(width, height);
-
-    // row_wise_annex = !(width <= height);
-    // if (row_wise_annex) board_next = new BoardAnnex(2, height);
-    // else
 
     #if (CONWAY_CHECKING_BOARD_MINIMIZE)
         #if (CONWAY_CHECKING_BOARD_USE_STACK)
@@ -394,13 +211,6 @@ Conway::Conway(
     #if (CONWAY_CHECK_IF_IN_CYCLE)
         board_two_ago =  new Board(width, height);
     #endif /* CONWAY_CHECK_IF_IN_CYCLE */
-
-    // delete colors;
-
-    colors = new uint16_t [CELL_STATE_MAX - 1];
-    colors[CELL_STATE_DEAD] = led_matrix->Color(0, 0, 0);
-    colors[CELL_STATE_WIPE] = led_matrix->Color(255, 255, 255);
-
 }
 
 /**
@@ -477,7 +287,6 @@ void Conway::_randomize() {
     #endif /* GAME_DEBUG */
 
     board->reset();
-
 
     // board->setAlive(1, 0);
     // board->setAlive(1, 1);
@@ -620,13 +429,11 @@ void Conway::_assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y) {
  * Begin a new round of conway. Reset grid and init colors.
  */
 void Conway::_newRound() {
-    #if (CONWAY_COUNT_MOVES)
-        number_of_rounds_running = 0;
-    #endif /* CONWAY_COUNT_MOVES */
+    Game::_newRound();
 
     #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
         number_of_moves_since_cycle_detected = 0;
-    #endif /* CONWAY_CYCLE_DETECTED_BUFFER */
+    #endif  CONWAY_CYCLE_DETECTED_BUFFER
 
     _randomize();
 
@@ -635,45 +442,6 @@ void Conway::_newRound() {
     #endif /* CONWAY_ASSIGN_DENSITY */
 
     _initColors();
-}
-
-/**
- * Draw an individual cell in the grid
- *
- * @param  {uint8_t} x  x coordiante
- * @param  {uint8_t} y  y coordiante
- */
-void Conway::_drawCell(uint8_t x, uint8_t y) {
-    #if (CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL)
-        #if (CONWAY_WIPE_EFFECT_DRAW_MARKER)
-            led_matrix->drawPixel(x, y, colors[CELL_STATE_WIPE]);
-            led_matrix->show();
-
-            #if (CONWAY_WIPE_EFFECT_DELAY > 0)
-                delay(CONWAY_WIPE_EFFECT_DELAY);
-            #endif /* CONWAY_WIPE_EFFECT_DELAY > 0 */
-        #endif /* CONWAY_WIPE_EFFECT_DRAW_MARKER */
-
-        led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
-
-        #if (!CONWAY_WIPE_EFFECT_DRAW_MARKER)
-            led_matrix->show();
-        #endif /* !CONWAY_WIPE_EFFECT_DRAW_MARKER */
-    #else
-        led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
-    #endif /* CONWAY_WIPE_EFFECT && CONWAY_WIPE_EFFECT_PER_CELL */
-}
-
-/**
- * Init for `setup()` function
- */
-void Conway::init() {
-    led_matrix->setBrightness(BRIGHTNESS);
-    led_matrix->begin();
-    led_matrix->fillScreen(colors[CELL_STATE_DEAD]);
-    led_matrix->show();
-
-    _newRound();
 }
 
 /**
@@ -806,7 +574,6 @@ void Conway::update() {
         board->copyBoard(board_next);
     #endif /* !CONWAY_CHECKING_BOARD_MINIMIZE */
 
-
     #if (CONWAY_CHECK_IF_IN_CYCLE)
         if (!(number_of_rounds_running % 2)) {
 
@@ -853,127 +620,6 @@ void Conway::update() {
             }
         }
     #endif /* CONWAY_CHECK_IF_IN_CYCLE */
-
-    return;
 }
-
-/**
- * Draw board.
- */
-void Conway::draw() {
-
-    #if (GAME_DEBUG)
-        Serial.println("MOVE");
-        // Serial.println("\n\n\n\n\n\n");
-
-        board->print();
-    #endif /* GAME_DEBUG */
-
-    #if (CONWAY_COUNT_MOVES)
-        number_of_rounds_running++;
-
-        #if (CONWAY_MAX_MOVES > 0)
-            if(number_of_rounds_running > CONWAY_MAX_MOVES) {
-                #if (GAME_DEBUG)
-                    Serial.println("Maximum Number of Moves Ran, resetting board");
-                #endif /* GAME_DEBUG */
-
-                _newRound();
-            }
-        #endif /* CONWAY_MAX_MOVES */
-    #endif /* CONWAY_COUNT_MOVES */
-
-    #if (CONWAY_DRAW_MODE == CONWAY_DRAW_MODE_SIMPLE)
-        for (i_col = 0; i_col < width; i_col++) {
-            for (i_row = 0; i_row < height; i_row++) {
-                led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
-            }
-        }
-
-        led_matrix->show();
-
-        return;
-    #endif /* CONWAY_DRAW_MODE == CONWAY_DRAW_MODE_SIMPLE */
-
-    #if (CONWAY_WIPE_EFFECT && CLEAR_ON_REDRAW)
-        #if (CONWAY_DRAW_MODE_SPIRAL)
-            for (i_col = 0; i_col < width; i_col++) {
-                for (i_row = 0; i_row < height; i_row++) {
-                    led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_DEAD]);
-                }
-            }
-        #else
-            led_matrix->clear();
-        #endif /* CONWAY_DRAW_MODE_SPIRAL */
-
-        led_matrix->show();
-    #endif /* CONWAY_WIPE_EFFECT && CLEAR_ON_REDRAW */
-
-    #if (CONWAY_DRAW_MODE == CONWAY_DRAW_MODE_ROW_WISE)
-        for (i_col = 0; i_col < width; i_col++) {
-            for (i_row = 0; i_row < height; i_row++) {
-                _drawCell(i_col, i_row);
-            }
-
-            #if (CONWAY_WIPE_EFFECT && (!CONWAY_WIPE_EFFECT_PER_CELL))
-                #if (CONWAY_WIPE_EFFECT_DRAW_MARKER)
-                    for (i_row = 0; i_row < height; i_row++) {
-                        led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_WIPE]);
-                    }
-                #endif /* CONWAY_WIPE_EFFECT_DRAW_MARKER */
-
-                led_matrix->show();
-
-                #if (CONWAY_WIPE_EFFECT_DRAW_MARKER)
-                    for (i_row = 0; i_row < height; i_row++) {
-                        led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
-                    }
-                #endif /* CONWAY_WIPE_EFFECT_DRAW_MARKER */
-
-                #if (CONWAY_WIPE_EFFECT_DELAY > 0)
-                    delay(CONWAY_WIPE_EFFECT_DELAY);
-                #endif /* CONWAY_WIPE_EFFECT_DELAY > 0 */
-            #endif /* CONWAY_WIPE_EFFECT */
-        }
-    #elif (CONWAY_DRAW_MODE == CONWAY_DRAW_MODE_SPIRAL)
-        spiral_spins = (width / 2) + 1;
-        spiral_width = width;
-        spiral_height = height;
-
-        i_col = 0;
-        i_row = 0;
-
-        for (i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
-            for (i_col = max(width - spiral_width - 1, 0); i_col < spiral_width; i_col++) {
-                if (i_spiral_spin != 0) _drawCell(i_col, i_row);
-
-                if (i_col == spiral_width - 1) {
-                    for (i_row = height - spiral_height; i_row < spiral_height; i_row++) {
-                        _drawCell(i_col, i_row);
-                    }
-                }
-            }
-
-            i_row--;
-            i_col--;
-
-            for (; i_col > width - spiral_width; i_col--) {
-                _drawCell(i_col, i_row);
-            }
-
-            for (; i_row > height - spiral_height; i_row--) {
-                _drawCell(i_col, i_row);
-            }
-
-            spiral_width--;
-            spiral_height--;
-        }
-
-        led_matrix->show();
-    #endif /* (CONWAY_DRAW_MODE == CONWAY_DRAW_MODE_ROW_WISE) */
-
-    led_matrix->show();
-}
-
 
 #endif /* Conway_h */
