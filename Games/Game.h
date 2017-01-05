@@ -28,7 +28,7 @@
  * current state. This may slow down the board speed if board is large
  */
 #ifndef GAME_DEBUG
-    #define GAME_DEBUG true
+    #define GAME_DEBUG false
 #endif /* GAME_DEBUG */
 
 /**
@@ -36,7 +36,7 @@
  * as a quick and dirty way to not get stuck in a repeated state
  */
 #ifndef GAME_MAX_MOVES
-    #define GAME_MAX_MOVES 5
+    #define GAME_MAX_MOVES -1
 #endif /* GAME_MAX_MOVES */
 
 /**
@@ -104,14 +104,14 @@
  * imposed by redrawing by the NeoMatrix library
  */
 #ifndef GAME_DRAW_EFFECT_WIPE_DELAY
-    #define GAME_DRAW_EFFECT_WIPE_DELAY 10
+    #define GAME_DRAW_EFFECT_WIPE_DELAY 0
 #endif GAME_DRAW_EFFECT_WIPE_DELAY /* GAME_DRAW_EFFECT_WIPE_DELAY */
 
 /**
  * Redraws board one cell at a time. This will make the effect quite slow.
  */
 #ifndef GAME_DRAW_EFFECT_PER_CELL
-    #define GAME_DRAW_EFFECT_PER_CELL true
+    #define GAME_DRAW_EFFECT_PER_CELL false
 #endif GAME_DRAW_EFFECT_PER_CELL /* GAME_DRAW_EFFECT_PER_CELL */
 
 /**
@@ -134,20 +134,20 @@
     #define CELL_STATE_ALIVE 1
 #endif /* CELL_STATE_ALIVE */
 
+#ifndef CELL_STATE_WIPE
+    #define CELL_STATE_WIPE CELL_STATE_ALIVE + 1
+#endif /* CELL_STATE_WIPE */
+
 #ifndef CELL_STATE_ALIVE_LOW
-    #define CELL_STATE_ALIVE_LOW  CELL_STATE_ALIVE + 1
+    #define CELL_STATE_ALIVE_LOW  CELL_STATE_WIPE + 1
 #endif /* CELL_STATE_ALIVE_LOW */
 
 #ifndef CELL_STATE_ALIVE_HIGH
     #define CELL_STATE_ALIVE_HIGH CELL_STATE_ALIVE_LOW + 1
 #endif /* CELL_STATE_ALIVE_HIGH */
 
-#ifndef CELL_STATE_WIPE
-    #define CELL_STATE_WIPE CELL_STATE_ALIVE_HIGH + 1
-#endif /* CELL_STATE_WIPE */
-
 #ifndef CELL_STATE_MAX
-    #define CELL_STATE_MAX CELL_STATE_WIPE
+    #define CELL_STATE_MAX CELL_STATE_ALIVE_HIGH
 #endif /* CELL_STATE_MAX */
 
 /*******************************************************************************
@@ -164,23 +164,23 @@
 
 class Game {
 private:
-    Adafruit_NeoMatrix * led_matrix;
-
-    #if (GAME_COUNT_MOVES > 0)
-        uint16_t number_of_rounds_running;
-    #endif /* GAME_COUNT_MOVES */
-
     #if (GAME_DRAW_MODE_SPIRAL)
         uint8_t spiral_spins;
         uint8_t i_spiral_spin;
         uint8_t spiral_width;
         uint8_t spiral_height;
+
+        void _drawSpiralCell(uint8_t x, uint8_t y);
     #endif /* GAME_DRAW_MODE_SPIRAL */
 
-    void _drawCell(uint8_t x, uint8_t y);
-
 protected:
+    Adafruit_NeoMatrix * led_matrix;
+
     Board * board;
+
+    #if (GAME_COUNT_MOVES > 0)
+        uint16_t number_of_rounds_running;
+    #endif /* GAME_COUNT_MOVES */
 
     uint8_t i_col;
     uint8_t i_row;
@@ -189,7 +189,7 @@ protected:
 
     uint16_t * colors;
 
-    void _newRound();
+    virtual void _newRound();
 
 public:
     Game(
@@ -200,8 +200,8 @@ public:
         uint8_t pin
     );
 
-    void init();
-    void update();
+    virtual void init();
+    virtual void update();
     void draw();
 };
 
@@ -244,71 +244,102 @@ Game::Game(
     board->reset();
 
     colors = new uint16_t [CELL_STATE_MAX + 1];
-    colors[CELL_STATE_DEAD]         = led_matrix->Color(0, 0, 0);
-    colors[CELL_STATE_ALIVE]        = led_matrix->Color(0, 255, 255);
-    colors[CELL_STATE_ALIVE_LOW]    = led_matrix->Color(150, 150, 150);
-    colors[CELL_STATE_ALIVE_HIGH]   = led_matrix->Color(255, 255, 255);
-    colors[CELL_STATE_WIPE]         = led_matrix->Color(255, 255, 255);
+    colors[CELL_STATE_DEAD]     = led_matrix->Color(0, 0, 0);
+    colors[CELL_STATE_ALIVE]    = led_matrix->Color(0, 255, 255);
 
+    #if (CELL_STATE_MAX >= CELL_STATE_WIPE)
+        colors[CELL_STATE_WIPE] = led_matrix->Color(255, 255, 255);
+    #endif /* CELL_STATE_MAX >= CELL_STATE_WIPE */
+
+    #if (CELL_STATE_MAX >= CELL_STATE_ALIVE_LOW)
+        colors[CELL_STATE_ALIVE_LOW] = led_matrix->Color(150, 150, 150);
+    #endif /* CELL_STATE_MAX > CELL_STATE_ALIVE_LOW */
+
+    #if (CELL_STATE_MAX >= CELL_STATE_ALIVE_HIGH)
+        colors[CELL_STATE_ALIVE_HIGH] = led_matrix->Color(255, 255, 255);
+    #endif /* CELL_STATE_MAX > CELL_STATE_ALIVE_HIGH */
 }
 
+/**
+ * Init game
+ */
 void Game::init() {
     led_matrix->setBrightness(GAME_BRIGHTNESS);
     led_matrix->begin();
     led_matrix->fillScreen(colors[CELL_STATE_DEAD]);
     led_matrix->show();
 
-    i_col = i_row = 3;
-    if (width == height) {
-        i_col = width / 2;
-        i_row = height / 2;
-    }
-    board->setAlive(i_col    , i_row - 1);
-    board->setAlive(i_col - 1, i_row    );
-    board->setAlive(i_col    , i_row    );
-    board->setAlive(i_col + 1, i_row    );
-    board->setAlive(i_col - 1, i_row + 1);
-    board->setAlive(i_col + 1, i_row + 1);
-    board->setAlive(i_col    , i_row + 2);
+    // i_col = i_row = 3;
+    // if (width == height) {
+    //     i_col = width / 2;
+    //     i_row = height / 2;
+    // }
+    // board->setAlive(i_col    , i_row - 1);
+    // board->setAlive(i_col - 1, i_row    );
+    // board->setAlive(i_col    , i_row    );
+    // board->setAlive(i_col + 1, i_row    );
+    // board->setAlive(i_col - 1, i_row + 1);
+    // board->setAlive(i_col + 1, i_row + 1);
+    // board->setAlive(i_col    , i_row + 2);
 
     _newRound();
 }
 
+/**
+ * Update game
+ */
 void Game::update() { }
 
+/**
+ * Set new round
+ */
 void Game::_newRound() {
     #if (GAME_COUNT_MOVES)
         number_of_rounds_running = 0;
     #endif /* GAME_COUNT_MOVES */
 }
 
-/**
- * Draw an individual cell in the grid
- *
- * @param  {uint8_t} x  x coordiante
- * @param  {uint8_t} y  y coordiante
- */
-void Game::_drawCell(uint8_t x, uint8_t y) {
-    #if (GAME_DRAW_EFFECT_WIPE && GAME_DRAW_EFFECT_PER_CELL)
-        #if (GAME_DRAW_EFFECT_DRAW_MARKER)
+#if (GAME_DRAW_MODE_SPIRAL)
+    /**
+     * Draw an individual cell in the grid for spiral. Should only be called if
+     * GAME_DRAW_EFFECT_PER_CELL is true
+     *
+     * @param  {uint8_t} x  x coordiante
+     * @param  {uint8_t} y  y coordiante
+     */
+    void Game::_drawSpiralCell(uint8_t x, uint8_t y) {
+        #if (GAME_DRAW_EFFECT_WIPE && GAME_DRAW_EFFECT_PER_CELL)
+            #if (GAME_DRAW_EFFECT_DRAW_MARKER)
+                led_matrix->drawPixel(x, y, colors[CELL_STATE_WIPE]);
+                led_matrix->show();
+
+                #if (GAME_DRAW_EFFECT_WIPE_DELAY > 0)
+                    delay(GAME_DRAW_EFFECT_WIPE_DELAY);
+                #endif /* GAME_DRAW_EFFECT_WIPE_DELAY > 0 */
+            #endif /* GAME_DRAW_EFFECT_DRAW_MARKER */
+
+            led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
+
+            #if (!GAME_DRAW_EFFECT_DRAW_MARKER)
+                led_matrix->show();
+            #endif /* !GAME_DRAW_EFFECT_DRAW_MARKER */
+        #elif (GAME_DRAW_EFFECT_WIPE)
             led_matrix->drawPixel(x, y, colors[CELL_STATE_WIPE]);
+
             led_matrix->show();
 
             #if (GAME_DRAW_EFFECT_WIPE_DELAY > 0)
                 delay(GAME_DRAW_EFFECT_WIPE_DELAY);
             #endif /* GAME_DRAW_EFFECT_WIPE_DELAY > 0 */
-        #endif /* GAME_DRAW_EFFECT_DRAW_MARKER */
+        #else
+            led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
+        #endif /* GAME_DRAW_EFFECT_WIPE && GAME_DRAW_EFFECT_PER_CELL*/
+    }
+#endif
 
-        led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
-
-        #if (!GAME_DRAW_EFFECT_DRAW_MARKER)
-            led_matrix->show();
-        #endif /* !GAME_DRAW_EFFECT_DRAW_MARKER */
-    #else
-        led_matrix->drawPixel(x, y, colors[board->getState(x, y)]);
-    #endif /* GAME_DRAW_EFFECT_WIPE && GAME_DRAW_EFFECT_PER_CELL */
-}
-
+/**
+ * Draw board
+ */
 void Game::draw() {
     #if (GAME_DEBUG)
         Serial.println("\nMOVE " + String(number_of_rounds_running));
@@ -341,27 +372,94 @@ void Game::draw() {
         led_matrix->show();
     #endif /* GAME_DRAW_CLEAR_ON_REDRAW */
 
+    #if (GAME_DRAW_MODE == GAME_DRAW_MODE_SPIRAL)
+        spiral_spins = (width / 2) + 1;
+        spiral_width = width;
+        spiral_height = height;
 
-    #if (GAME_DRAW_MODE == GAME_DRAW_MODE_DEFAULT)
+        i_col = 0;
+        i_row = 0;
+
+        for (i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
+            for (i_col = max(width - spiral_width - 1, 0); i_col < spiral_width; i_col++) {
+
+                /**
+                 * Up
+                 */
+                if (i_spiral_spin != 0) _drawSpiralCell(i_col, i_row);
+
+                /**
+                 * Right
+                 */
+                if (i_col == spiral_width - 1) {
+                    for (i_row = height - spiral_height; i_row < spiral_height; i_row++) {
+                        _drawSpiralCell(i_col, i_row);
+                    }
+                }
+            }
+
+            i_row--;
+            i_col--;
+
+            /**
+             * Down
+             */
+            for (; i_col > width - spiral_width; i_col--) {
+                _drawSpiralCell(i_col, i_row);
+            }
+
+            /**
+             * Left
+             */
+            for (; i_row > height - spiral_height; i_row--) {
+                _drawSpiralCell(i_col, i_row);
+            }
+
+            spiral_width--;
+            spiral_height--;
+        }
+
+        #if (GAME_DRAW_EFFECT_WIPE && !GAME_DRAW_EFFECT_PER_CELL)
+            for (i_col = 0; i_col < width; i_col++) {
+                for (i_row = 0; i_row < height; i_row++) {
+                    led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
+                }
+            }
+        #endif /* GAME_DRAW_EFFECT_WIPE && !GAME_DRAW_EFFECT_PER_CELL */
+    #else
+
+        #if (GAME_DRAW_MODE == GAME_DRAW_MODE_ROW_WISE)
+        for (i_row = 0; i_row < height; i_row++) {
+        #else
         for (i_col = 0; i_col < width; i_col++) {
-
+        #endif /* GAME_DRAW_MODE_ROW_WISE */
             /**
              * If we want to wipe, set all in row to visible
              */
             #if (GAME_DRAW_EFFECT_WIPE)
+                #if (GAME_DRAW_MODE == GAME_DRAW_MODE_ROW_WISE)
+                for (i_col = 0; i_col < width; i_col++) {
+                #else
                 for (i_row = 0; i_row < height; i_row++) {
+                #endif /* GAME_DRAW_MODE_ROW_WISE */
+
                     #if (GAME_DRAW_EFFECT_PER_CELL)
                         #if (GAME_DRAW_EFFECT_DRAW_MARKER)
                             led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_WIPE]);
                         #endif /* GAME_DRAW_EFFECT_DRAW_MARKER */
 
+                        #if (GAME_DRAW_MODE == GAME_DRAW_MODE_ROW_WISE)
+                        if (i_col > 0) led_matrix->drawPixel(i_col - 1, i_row, colors[board->getState(i_col, i_row)]);
+                        #else
                         if (i_row > 0) led_matrix->drawPixel(i_col, i_row - 1, colors[board->getState(i_col, i_row)]);
+                        #endif /* GAME_DRAW_MODE_ROW_WISE */
 
                         led_matrix->show();
 
                         #if (GAME_DRAW_EFFECT_WIPE_DELAY > 0)
                             delay(GAME_DRAW_EFFECT_WIPE_DELAY);
                         #endif /* GAME_DRAW_EFFECT_WIPE_DELAY > 0 */
+
                     #elif (GAME_DRAW_EFFECT_DRAW_MARKER)
                         led_matrix->drawPixel(i_col, i_row, colors[CELL_STATE_WIPE]);
                     #endif /* GAME_DRAW_EFFECT_PER_CELL */
@@ -383,63 +481,17 @@ void Game::draw() {
             /**
              * Draw cell
              */
+
+            #if (GAME_DRAW_MODE == GAME_DRAW_MODE_ROW_WISE)
+            for (i_col = 0; i_col < width; i_col++) {
+            #else
             for (i_row = 0; i_row < height; i_row++) {
+            #endif /* GAME_DRAW_MODE_ROW_WISE */
                 led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
             }
         }
 
-        led_matrix->show();
-        return;
-
-
-    // #elif (GAME_DRAW_MODE == GAME_DRAW_MODE_ROW_WISE)
-    //     for (i_row = 0; i_row < height; i_row++) {
-    //         for (i_col = 0; i_col < width; i_col++) {
-    //             led_matrix->drawPixel(i_col, i_row, colors[board->getState(i_col, i_row)]);
-    //         }
-    //     }
-    //     led_matrix->show();
-    //     return;
-
-    #endif /* GAME_DRAW_MODE == GAME_DRAW_MODE_DEFAULT */
-
-
-    // #elif (GAME_DRAW_MODE == GAME_DRAW_MODE_SPIRAL)
-    //     // spiral_spins = (width / 2) + 1;
-    //     // spiral_width = width;
-    //     // spiral_height = height;
-
-    //     // i_col = 0;
-    //     // i_row = 0;
-
-    //     // for (i_spiral_spin = 0; i_spiral_spin < spiral_spins; i_spiral_spin++) {
-    //     //     for (i_col = max(width - spiral_width - 1, 0); i_col < spiral_width; i_col++) {
-    //     //         if (i_spiral_spin != 0) _drawCell(i_col, i_row);
-
-    //     //         if (i_col == spiral_width - 1) {
-    //     //             for (i_row = height - spiral_height; i_row < spiral_height; i_row++) {
-    //     //                 _drawCell(i_col, i_row);
-    //     //             }
-    //     //         }
-    //     //     }
-
-    //     //     i_row--;
-    //     //     i_col--;
-
-    //     //     for (; i_col > width - spiral_width; i_col--) {
-    //     //         _drawCell(i_col, i_row);
-    //     //     }
-
-    //     //     for (; i_row > height - spiral_height; i_row--) {
-    //     //         _drawCell(i_col, i_row);
-    //     //     }
-
-    //     //     spiral_width--;
-    //     //     spiral_height--;
-    //     // }
-
-    //     // led_matrix->show();
-    // #endif /* GAME_DRAW_MODE == GAME_DRAW_MODE_ROW_WISE */
+    #endif /* GAME_DRAW_MODE */
 
     led_matrix->show();
 }
