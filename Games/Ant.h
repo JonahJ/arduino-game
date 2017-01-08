@@ -15,7 +15,7 @@
  */
 #ifndef ANT_WRAP_BOARD
     #define ANT_WRAP_BOARD 1
-#endif ANT_WRAP_BOARD
+#endif ANT_WRAP_BOARD /* ANT_WRAP_BOARD */
 
 /*******************************************************************************
  *                                Directions                                   *

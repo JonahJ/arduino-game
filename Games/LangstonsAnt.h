@@ -97,7 +97,7 @@ public:
         uint8_t pin
     );
 
-    void update();
+    virtual void update();
 };
 
 /**
@@ -132,7 +132,7 @@ LangstonsAnt::LangstonsAnt(
 
     #if (LANGSTONS_ANT_CHECK_ALL_ANTS_SAME)
         all_ants_same = true;
-    #endif
+    #endif /* LANGSTONS_ANT_CHECK_ALL_ANTS_SAME */
 }
 
 /**

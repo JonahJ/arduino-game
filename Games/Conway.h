@@ -154,7 +154,7 @@ private:
     #endif /* CONWAY_ASSIGN_DENSITY */
 
 protected:
-    void _newRound();
+    virtual void _newRound();
 
 public:
     Conway(
@@ -165,7 +165,7 @@ public:
         uint8_t pin
     );
 
-    void update();
+    virtual void update();
 };
 
 
@@ -405,7 +405,7 @@ void Conway::_newRound() {
 
     #if (CONWAY_CYCLE_DETECTED_BUFFER > 0)
         number_of_moves_since_cycle_detected = 0;
-    #endif  CONWAY_CYCLE_DETECTED_BUFFER
+    #endif  /* CONWAY_CYCLE_DETECTED_BUFFER */
 
     // _assignPattern();
     board->randomize();
