@@ -145,9 +145,8 @@ private:
     void _initColors();
 
     uint8_t num_skip;
-    uint8_t max_width_height;
 
-    void _randomize();
+    void _assignPattern();
     void _assignNumberCellsActiveSurrounding(uint8_t x, uint8_t y);
 
     #if (CONWAY_ASSIGN_DENSITY)
@@ -278,15 +277,9 @@ void Conway::_initColors() {
 }
 
 /**
- * Randomize grid
+ * Assign pattern to grid
  */
-void Conway::_randomize() {
-
-    #if (GAME_DEBUG)
-        Serial.println("Resetting");
-    #endif /* GAME_DEBUG */
-
-    board->reset();
+void Conway::_assignPattern() {
 
     // board->setAlive(1, 0);
     // board->setAlive(1, 1);
@@ -311,13 +304,13 @@ void Conway::_randomize() {
     /**
      * Glider
      */
-    // board->setAlive(1, 0);
-    // board->setAlive(2, 1);
-    // board->setAlive(0, 2);
-    // board->setAlive(1, 2);
-    // board->setAlive(2, 2);
-    // any_cells_alive = true;
-    // return;
+    board->setAlive(1, 0);
+    board->setAlive(2, 1);
+    board->setAlive(0, 2);
+    board->setAlive(1, 2);
+    board->setAlive(2, 2);
+    any_cells_alive = true;
+    return;
 
 
     /**
@@ -337,27 +330,6 @@ void Conway::_randomize() {
     // board->setAlive(i_col    , i_row + 2);
     // any_cells_alive = true;
     // return;
-
-
-    /**
-     * Psuedo Random
-     */
-    randomSeed(analogRead(0));
-    randomSeed(analogRead(random(0, 5)));
-
-    num_skip = random(0, 1);
-    max_width_height = max(width, height);
-
-    for (i_col = 0; i_col < width; i_col++) {
-        randomSeed(analogRead(random(0, 5)));
-        for (i_row = 0; i_row < height; i_row++) {
-            num_skip = random(0, max_width_height);
-            if (i_col % num_skip && num_skip % 2) {
-                board->setAlive(i_col, i_row);
-                any_cells_alive = true;
-            }
-        }
-    }
 }
 
 /**
@@ -435,7 +407,9 @@ void Conway::_newRound() {
         number_of_moves_since_cycle_detected = 0;
     #endif  CONWAY_CYCLE_DETECTED_BUFFER
 
-    _randomize();
+    // _assignPattern();
+    board->randomize();
+    any_cells_alive = true;
 
     #if (CONWAY_ASSIGN_DENSITY)
         _assignCurrentDensity();

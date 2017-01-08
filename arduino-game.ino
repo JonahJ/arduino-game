@@ -2,7 +2,7 @@
  * Delay in ms between rounds
  */
 #ifndef DELAY
-    #define DELAY 100
+    #define DELAY 50
 #endif /* DELAY */
 
 #include "Games/Game.h"
@@ -19,7 +19,7 @@ LangstonsAnt game = LangstonsAnt(8, 8, 2, 2, 6);
 
 
 void setup() {
-//
+
     #if (GAME_DEBUG)
         Serial.begin(9600);
     #endif /* GAME_DEBUG */
