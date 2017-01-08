@@ -51,7 +51,7 @@
  * How many ants
  */
 #ifndef LANGSTONS_ANT_NUM_ANTS
-    #define LANGSTONS_ANT_NUM_ANTS 2
+    #define LANGSTONS_ANT_NUM_ANTS 1
 #endif /* LANGSTONS_ANT_NUM_ANTS */
 
 /**
@@ -74,8 +74,6 @@ private:
     #if (LANGSTONS_ANT_CHECK_ALL_ANTS_SAME)
         bool all_ants_same;
     #endif /* LANGSTONS_ANT_CHECK_ALL_ANTS_SAME */
-
-    int moves;
 
 protected:
     virtual void _newRound();
@@ -126,16 +124,6 @@ LangstonsAnt::LangstonsAnt(
     #if (LANGSTONS_ANT_CHECK_ALL_ANTS_SAME)
         all_ants_same = true;
     #endif
-
-    // moves = new int [3];
-    // moves = [
-    //     ANT_DIRECTION_RIGHT
-    //     ,
-    //     ANT_DIRECTION_LEFT
-    // ];
-
-    // int array[] = { ANT_DIRECTION_RIGHT, ANT_DIRECTION_LEFT };
-
 }
 
 /**
@@ -239,7 +227,7 @@ void LangstonsAnt::update() {
     #endif /* GAME_DEBUG */
 
     /**
-     * Move ant
+     * Move ants
      */
     for(i_ant = 0; i_ant < LANGSTONS_ANT_NUM_ANTS; i_ant++) {
         ants[i_ant]->move(width, height);
