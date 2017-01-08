@@ -142,14 +142,14 @@ Ant::Ant(
 /**
  * Gets X coordinate
  *
- * @return {int8_t} x
+ * @return {uint8_t} x
  */
 uint8_t Ant::getX() const { return x; }
 
 /**
  * Gets Y coordinate
  *
- * @return {int8_t} y
+ * @return {uint8_t} y
  */
 uint8_t Ant::getY() const { return y; }
 
