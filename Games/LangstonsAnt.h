@@ -20,13 +20,13 @@
     #define CELL_STATE_ALIVE 1
 #endif /* CELL_STATE_ALIVE */
 
-#ifndef CELL_STATE_WIPE
-    #define CELL_STATE_WIPE CELL_STATE_ALIVE + 1
-#endif /* CELL_STATE_WIPE */
+#ifndef CELL_STATE_DEAD_BUT_ANT
+    #define CELL_STATE_DEAD_BUT_ANT CELL_STATE_ALIVE + 1
+#endif /* CELL_STATE_DEAD_BUT_ANT */
 
-#ifndef CELL_STATE_ALIVE_LOW
-    #define CELL_STATE_ALIVE_LOW  CELL_STATE_WIPE + 1
-#endif /* CELL_STATE_ALIVE_LOW */
+#ifndef CELL_STATE_ALIVE_BUT_ANT
+    #define CELL_STATE_ALIVE_BUT_ANT  CELL_STATE_DEAD_BUT_ANT + 1
+#endif /* CELL_STATE_ALIVE_BUT_ANT */
 
 #ifndef CELL_STATE_ANT
     #define CELL_STATE_ANT CELL_STATE_ALIVE_HIGH
@@ -60,6 +60,15 @@
 #ifndef LANGSTONS_ANT_CHECK_ALL_ANTS_SAME
     #define LANGSTONS_ANT_CHECK_ALL_ANTS_SAME 0
 #endif /* LANGSTONS_ANT_CHECK_ALL_ANTS_SAME */
+
+/**
+ * If true then all ants move at same time, ie their moved do not affect each
+ * other. Uses more CELL_STATES. If false then a previous ant's moves affect
+ * anothers.
+ */
+#ifndef LANGSTONS_ANT_ANTS_MOVE_IN_PARALLEL
+    #define LANGSTONS_ANT_ANTS_MOVE_IN_PARALLEL 1
+#endif /* LANGSTONS_ANT_ANTS_MOVE_IN_PARALLEL */
 
 /*******************************************************************************
  *                                LangstonsAnt                                 *
@@ -141,7 +150,13 @@ void LangstonsAnt::_newRound() {
 
                 #if (LANGSTONS_ANT_CHECK_ALL_ANTS_SAME)
                     if (LANGSTONS_ANT_NUM_ANTS == 1) all_ants_same = false;
-                    else if ((i_ant > 0) && (all_ants_same)) all_ants_same = (ants[i_ant-1]->getX() == ants[i_ant]->getX()) && (ants[i_ant]->getY() == ants[i_ant]->getY());
+                    else if ((i_ant > 0) && (all_ants_same)) all_ants_same = (
+                        ants[i_ant - 1]->getX() == ants[i_ant]->getX()
+                    ) && (
+                        ants[i_ant - 1]->getY() == ants[i_ant]->getY()
+                    );
+
+                    if (!all_ants_same) break;
                 #endif /* LANGSTONS_ANT_CHECK_ALL_ANTS_SAME */
 
                 ants[i_ant]->randomize(width, height);
@@ -159,8 +174,13 @@ void LangstonsAnt::_newRound() {
 
                 for(i_ant = 0; i_ant < LANGSTONS_ANT_NUM_ANTS; i_ant++) {
                     if ((i_ant > 0) && (all_ants_same)){
-                        all_ants_same = (ants[i_ant-1]->getX() == ants[i_ant]->getX()) && (ants[i_ant]->getY() == ants[i_ant]->getY());
-                        break;
+                        all_ants_same = (
+                            ants[i_ant - 1]->getX() == ants[i_ant]->getX()
+                        ) && (
+                            ants[i_ant - 1]->getY() == ants[i_ant]->getY()
+                        );
+
+                        if (!all_ants_same) break;
                     }
                 }
 
@@ -198,11 +218,23 @@ void LangstonsAnt::_turnAnts() {
 
             ants[i_ant]->turn(true);
         }
-        else if (state_cell_ant_on[i_ant] == CELL_STATE_WIPE) {
-            Serial.println("Should not be wipe");
+        else if (state_cell_ant_on[i_ant] == CELL_STATE_DEAD_BUT_ANT) {
+            board->setState(
+                ants[i_ant]->getX(),
+                ants[i_ant]->getY(),
+                CELL_STATE_ALIVE
+            );
+
+            ants[i_ant]->turn(false);
         }
-        else if (state_cell_ant_on[i_ant] == CELL_STATE_ALIVE_LOW) {
-            Serial.println("Should not be alive low");
+        else if (state_cell_ant_on[i_ant] == CELL_STATE_ALIVE_BUT_ANT) {
+            board->setState(
+                ants[i_ant]->getX(),
+                ants[i_ant]->getY(),
+                CELL_STATE_DEAD
+            );
+
+            ants[i_ant]->turn(true);
         }
         else if (state_cell_ant_on[i_ant] == CELL_STATE_ANT) {
             Serial.println("Should not be ant");
@@ -237,15 +269,44 @@ void LangstonsAnt::update() {
             ants[i_ant]->getY()
         );
 
-        /**
-         * Show moved ant
-         */
-        board->setState(
-            ants[i_ant]->getX(),
-            ants[i_ant]->getY(),
-            CELL_STATE_ANT
-        );
+        #if (LANGSTONS_ANT_ANTS_MOVE_IN_PARALLEL)
+            if (state_cell_ant_on[i_ant] == CELL_STATE_DEAD)
+                board->setState(
+                    ants[i_ant]->getX(),
+                    ants[i_ant]->getY(),
+                    CELL_STATE_DEAD_BUT_ANT
+                );
+            else if (state_cell_ant_on[i_ant] == CELL_STATE_ALIVE)
+                board->setState(
+                    ants[i_ant]->getX(),
+                    ants[i_ant]->getY(),
+                    CELL_STATE_ALIVE_BUT_ANT
+                );
+        #else
+            /**
+             * Show moved ant
+             */
+            board->setState(
+                ants[i_ant]->getX(),
+                ants[i_ant]->getY(),
+                CELL_STATE_ANT
+            );
+        #endif /* LANGSTONS_ANT_ANTS_MOVE_IN_PARALLEL */
     }
+
+    /**
+     * Show as ant if moving in parallel
+     */
+    #if (LANGSTONS_ANT_ANTS_MOVE_IN_PARALLEL)
+        for(i_col = 0; i_col < width; i_col++) {
+            for(i_row = 0; i_row < height; i_row++) {
+                if (board->getState(i_col, i_row) == CELL_STATE_DEAD_BUT_ANT)
+                    board->setState(i_col, i_row, CELL_STATE_ANT);
+                else if (board->getState(i_col, i_row) == CELL_STATE_ALIVE_BUT_ANT)
+                    board->setState(i_col, i_row, CELL_STATE_ANT);
+            }
+        }
+    #endif /* LANGSTONS_ANT_ANTS_MOVE_IN_PARALLEL */
 }
 
 #endif /* LangstonsAnt_h */

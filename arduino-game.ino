@@ -2,7 +2,7 @@
  * Delay in ms between rounds
  */
 #ifndef DELAY
-    #define DELAY 0
+    #define DELAY 10
 #endif /* DELAY */
 
 // #include "Games/Game.h"

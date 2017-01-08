@@ -50,7 +50,7 @@
  * GAME_BRIGHTNESS for NeoMatrix
  */
 #ifndef GAME_BRIGHTNESS
-    #define GAME_BRIGHTNESS (uint8_t)10
+    #define GAME_BRIGHTNESS (uint8_t)50
 #endif /* GAME_BRIGHTNESS */
 
 /**
