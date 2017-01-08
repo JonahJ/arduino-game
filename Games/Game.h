@@ -96,7 +96,7 @@
  * Draw board one row at a time.
  */
 #ifndef GAME_DRAW_EFFECT_WIPE
-    #define GAME_DRAW_EFFECT_WIPE true
+    #define GAME_DRAW_EFFECT_WIPE false
 #endif GAME_DRAW_EFFECT_WIPE /* GAME_DRAW_EFFECT_WIPE */
 
 /**
@@ -248,15 +248,15 @@ Game::Game(
     colors[CELL_STATE_ALIVE]    = led_matrix->Color(0, 255, 255);
 
     #if (CELL_STATE_MAX >= CELL_STATE_WIPE)
-        colors[CELL_STATE_WIPE] = led_matrix->Color(255, 255, 255);
+        colors[CELL_STATE_WIPE] = led_matrix->Color(0, 0, 255);
     #endif /* CELL_STATE_MAX >= CELL_STATE_WIPE */
 
     #if (CELL_STATE_MAX >= CELL_STATE_ALIVE_LOW)
-        colors[CELL_STATE_ALIVE_LOW] = led_matrix->Color(150, 150, 150);
+        colors[CELL_STATE_ALIVE_LOW] = led_matrix->Color(0, 255, 0);
     #endif /* CELL_STATE_MAX > CELL_STATE_ALIVE_LOW */
 
     #if (CELL_STATE_MAX >= CELL_STATE_ALIVE_HIGH)
-        colors[CELL_STATE_ALIVE_HIGH] = led_matrix->Color(255, 255, 255);
+        colors[CELL_STATE_ALIVE_HIGH] = led_matrix->Color(255, 0, 0);
     #endif /* CELL_STATE_MAX > CELL_STATE_ALIVE_HIGH */
 }
 
@@ -294,6 +294,8 @@ void Game::update() { }
  * Set new round
  */
 void Game::_newRound() {
+    board->reset();
+
     #if (GAME_COUNT_MOVES)
         number_of_rounds_running = 0;
     #endif /* GAME_COUNT_MOVES */

@@ -111,6 +111,9 @@ private:
     uint8_t i_cell_col_value;
     uint8_t cell_state;
 
+    uint8_t num_skip;
+    uint8_t max_width_height;
+
 protected:
     uint8_t i_col;
     uint8_t i_row;
@@ -126,16 +129,18 @@ public:
     uint8_t getState(uint8_t x, uint8_t y);
 
     #if (GAME_DEBUG)
-        void print();
+        virtual void print();
     #endif /* GAME_DEBUG */
 
-    void setState(uint8_t x, uint8_t y, uint8_t state);
-    void setAlive(uint8_t x, uint8_t y);
-    void setDead(uint8_t x, uint8_t y);
+    virtual void setState(uint8_t x, uint8_t y, uint8_t state);
+    virtual void setAlive(uint8_t x, uint8_t y);
+    virtual void setDead(uint8_t x, uint8_t y);
 
-    void reset();
+    virtual void reset();
 
-    void copyBoard(Board * other_board);
+    virtual void copyBoard(Board * other_board);
+
+    void randomize();
 };
 
 
@@ -216,7 +221,7 @@ uint8_t Board::getState(uint8_t x, uint8_t y) {
 }
 
 /**
- * Print board to Serial
+ * Print Board to Serial
  */
 #if (GAME_DEBUG)
     void Board::print() {
@@ -360,6 +365,29 @@ void Board::copyBoard(Board * other_board) {
     for (i_col_annex = 0; i_col_annex < width; i_col_annex++) {
         for (i_row_annex = 0; i_row_annex < height; i_row_annex++) {
             setState(i_col_annex, i_row_annex, other_board->getState(i_col_annex, i_row_annex));
+        }
+    }
+}
+
+
+void Board::randomize() {
+    #if (GAME_DEBUG)
+        Serial.println("Resetting");
+    #endif /* GAME_DEBUG */
+
+    randomSeed(analogRead(0));
+    randomSeed(analogRead(random(0, 5)));
+
+    num_skip = random(0, 1);
+    max_width_height = max(width, height);
+
+    for (i_col_annex = 0; i_col_annex < width; i_col_annex++) {
+        randomSeed(analogRead(random(0, 5)));
+        for (i_row_annex = 0; i_row_annex < height; i_row_annex++) {
+            num_skip = random(0, max_width_height);
+            if (i_col_annex % num_skip && num_skip % 2) {
+                setAlive(i_col_annex, i_row_annex);
+            }
         }
     }
 }
