@@ -51,7 +51,7 @@
  * How many ants. Max thus far is 74
  */
 #ifndef LANGSTONS_ANT_NUM_ANTS
-    #define LANGSTONS_ANT_NUM_ANTS 2
+    #define LANGSTONS_ANT_NUM_ANTS 1
 #endif /* LANGSTONS_ANT_NUM_ANTS */
 
 /**

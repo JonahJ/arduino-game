@@ -43,16 +43,16 @@
 
 class Ant {
 private:
-    int8_t x;
-    int8_t y;
+    uint8_t x;
+    uint8_t y;
 
-    int8_t direction;
+    uint8_t direction;
 
 public:
     Ant(
-        int8_t _x = 0,
-        int8_t _y = 0,
-        int8_t _direction = ANT_DIRECTION_UP
+        uint8_t _x = 0,
+        uint8_t _y = 0,
+        uint8_t _direction = ANT_DIRECTION_UP
     );
 
     #if (GAME_DEBUG)
@@ -63,8 +63,8 @@ public:
         void randomize(uint8_t width = 8, uint8_t height = 8);
     #endif /* ANT_RANDOMIZE */
 
-    int8_t getX() const;
-    int8_t getY() const;
+    uint8_t getX() const;
+    uint8_t getY() const;
 
     void move(uint8_t width = 8, uint8_t height = 8);
     void turn(bool clockwise = true);
@@ -74,14 +74,14 @@ public:
 /**
  * Init Ant
  *
- * @param {int8_t} x
- * @param {int8_t} y
- * @param {int8_t} direction
+ * @param {uint8_t} x
+ * @param {uint8_t} y
+ * @param {uint8_t} direction
  */
 Ant::Ant(
-    int8_t _x = 0,
-    int8_t _y = 0,
-    int8_t _direction = ANT_DIRECTION_UP
+    uint8_t _x = 0,
+    uint8_t _y = 0,
+    uint8_t _direction = ANT_DIRECTION_UP
 ) {
     x = _x;
     y = _y;
@@ -144,14 +144,14 @@ Ant::Ant(
  *
  * @return {int8_t} x
  */
-int8_t Ant::getX() const { return x; }
+uint8_t Ant::getX() const { return x; }
 
 /**
  * Gets Y coordinate
  *
  * @return {int8_t} y
  */
-int8_t Ant::getY() const { return y; }
+uint8_t Ant::getY() const { return y; }
 
 /**
  * Move in proper direction
@@ -160,27 +160,42 @@ int8_t Ant::getY() const { return y; }
  * @param  {uint8_t} height
  */
 void Ant::move(uint8_t width = 8, uint8_t height = 8) {
-    if (direction == ANT_DIRECTION_UP) y--;
-    else if (direction == ANT_DIRECTION_RIGHT) x++;
-    else if (direction == ANT_DIRECTION_DOWN) y++;
-    else if (direction == ANT_DIRECTION_LEFT) x--;
-
-    /**
-     * Check if beyond boundary
-     */
-    #if (ANT_WRAP_BOARD)
-        if (y == width) y = 0;
-        else if (y < 0) y = --width;
-
-        if (x == height) x = 0;
-        else if (x < 0) x = --height;
-    #else
-        if (y == width) y--;
-        else if (y < 0) y++;
-
-        if (x == height) x--;
-        else if (x < 0) x++;
-    #endif /* ANT_WRAP_BOARD */
+    if (direction == ANT_DIRECTION_UP) {
+        if (y == 0)
+            #if (ANT_WRAP_BOARD)
+                y = --width;
+            #else
+                ;
+            #endif /* ANT_WRAP_BOARD */
+        else y--;
+    }
+    else if (direction == ANT_DIRECTION_RIGHT) {
+        if (x == height - 1)
+            #if (ANT_WRAP_BOARD)
+                x = 0;
+            #else
+                ;
+            #endif /* ANT_WRAP_BOARD */
+        else x++;
+    }
+    else if (direction == ANT_DIRECTION_DOWN) {
+        if (y == width - 1)
+            #if (ANT_WRAP_BOARD)
+                y = 0;
+            #else
+                ;
+            #endif /* ANT_WRAP_BOARD */
+        else y++;
+    }
+    else if (direction == ANT_DIRECTION_LEFT) {
+        if (x == 0)
+            #if (ANT_WRAP_BOARD)
+                x = --height;
+            #else
+                ;
+            #endif /* ANT_WRAP_BOARD */
+        else x--;
+    }
 }
 
 /**
@@ -189,9 +204,12 @@ void Ant::move(uint8_t width = 8, uint8_t height = 8) {
  * @param  {bool} clockwise turn if true
  */
 void Ant::turn(bool clockwise = true) {
-    if (clockwise) direction++;
-    else direction--;
-
-    if (direction > ANT_DIRECTION_LEFT) direction = ANT_DIRECTION_UP;
-    else if (direction < ANT_DIRECTION_UP) direction = ANT_DIRECTION_LEFT;
+    if (clockwise) {
+        if (direction == ANT_DIRECTION_LEFT) direction = ANT_DIRECTION_UP;
+        else direction++;
+    }
+    else {
+        if (direction == ANT_DIRECTION_UP) direction = ANT_DIRECTION_LEFT;
+        else direction--;
+    }
 }
